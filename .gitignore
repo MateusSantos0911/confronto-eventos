@@ -1,0 +1,12 @@
+# NUNCA versionar dados pessoais nem a versão com base embutida
+confronto_esocial_ergon.html
+confronto_esocial_ergon_1.html
+confronto_esocial_ergon_pessoal.html
+base_embed.json
+*.csv
+DADOS_*
+LISTA_*
+FOLHA_*
+*.xlsx
+.DS_Store
+Thumbs.db
