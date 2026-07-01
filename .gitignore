@@ -9,7 +9,9 @@ LISTA_*
 FOLHA_*
 *.xlsx
 
-# helper local de teste — não publicar
+# helpers locais / fontes de build — não publicar no Pages
 server.ps1
+gate-snippet.html
+tpl.html
 .DS_Store
 Thumbs.db
