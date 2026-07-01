@@ -8,5 +8,8 @@ DADOS_*
 LISTA_*
 FOLHA_*
 *.xlsx
+
+# helper local de teste — não publicar
+server.ps1
 .DS_Store
 Thumbs.db

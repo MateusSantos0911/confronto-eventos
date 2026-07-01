@@ -150,6 +150,35 @@
 </style>
 </head>
 <body>
+<div id="__gate" style="position:fixed;inset:0;z-index:2147483647;background:#0f172a;display:flex;align-items:center;justify-content:center;font-family:system-ui,Segoe UI,Arial,sans-serif">
+  <form id="__gateForm" style="background:#fff;padding:28px 26px;border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.35);width:min(360px,90vw);text-align:center">
+    <div style="font-size:15px;font-weight:600;color:#0f172a;margin-bottom:4px">Confronto eSocial &times; ERGON</div>
+    <div style="font-size:12.5px;color:#64748b;margin-bottom:16px">Acesso restrito &mdash; informe a senha</div>
+    <input id="__gatePw" type="password" autocomplete="current-password" placeholder="Senha" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;outline:none">
+    <div id="__gateErr" style="color:#dc2626;font-size:12px;height:16px;margin:8px 0 4px">&nbsp;</div>
+    <button type="submit" style="width:100%;padding:10px;border:0;border-radius:8px;background:#2563eb;color:#fff;font-size:14px;font-weight:600;cursor:pointer">Entrar</button>
+  </form>
+</div>
+<script>
+(function(){
+  var HASH="b6dd6a14dcd28d9c012e8915c7c9939015eb536636be090dc1b65a0c0f527d3b";
+  var KEY="esocial_gate_ok_v1";
+  var gate=document.getElementById("__gate");
+  function unlock(){ try{sessionStorage.setItem(KEY,"1");}catch(e){} if(gate&&gate.parentNode){gate.parentNode.removeChild(gate);} document.documentElement.style.overflow=""; }
+  try{ if(sessionStorage.getItem(KEY)==="1"){ unlock(); return; } }catch(e){}
+  document.documentElement.style.overflow="hidden";
+  async function sha256(t){ var b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t)); return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,"0");}).join(""); }
+  var f=document.getElementById("__gateForm"), pw=document.getElementById("__gatePw"), err=document.getElementById("__gateErr");
+  if(pw){pw.focus();}
+  f.addEventListener("submit",async function(ev){
+    ev.preventDefault(); err.innerHTML="&nbsp;";
+    try{
+      var h=await sha256(pw.value);
+      if(h===HASH){ unlock(); } else { err.textContent="Senha incorreta."; pw.select(); }
+    }catch(e){ err.textContent="Este navegador exige HTTPS para validar a senha."; }
+  });
+})();
+</script>
 <div class="wrap">
 
   <header class="app">
