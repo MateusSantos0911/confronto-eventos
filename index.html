@@ -907,6 +907,7 @@
       <div class="chips" id="dshTabs">
         <button class="chip call" data-tab="pend" aria-pressed="true">Pendentes</button>
         <button class="chip cwarn" data-tab="fora" aria-pressed="false">Enviados fora da folha</button>
+        <button class="chip c1202" data-tab="enviados" aria-pressed="false">Todos enviados</button>
       </div>
       <button class="hb-btn" id="dshAddHist">Salvar no hist&oacute;rico</button>
       <button class="btn-export" id="dshExport">Exportar .xlsx</button>
@@ -980,6 +981,7 @@
         <button class="chip cign" data-tab="faltaFolha" aria-pressed="false">Falta na folha</button>
         <button class="chip c1202" data-tab="divBase" aria-pressed="false">Diverg&ecirc;ncia base</button>
         <button class="chip c1207" data-tab="divInss" aria-pressed="false">Diverg&ecirc;ncia INSS</button>
+        <button class="chip c1200" data-tab="todosEso" aria-pressed="false">Todos enviados (eSocial)</button>
       </div>
       <button class="btn-export" id="inssExport">Exportar .xlsx</button>
     </div>
@@ -1897,13 +1899,24 @@ function dshRenderList(c){
     $('#dshList').innerHTML='<table class="dsh-table"><thead><tr><th>CPF</th><th>Nome</th><th>Matrícula(s)</th><th>Categoria</th><th>Situação</th><th></th></tr></thead><tbody>'+
       (cap.length?cap.map(function(x){return '<tr'+(x.manual?' class="manrow"':'')+'><td class="mono">'+x.cpf+'</td><td>'+x.nome+(x.manual?'<span class="mantag">manual</span>':'')+'</td><td class="mono">'+x.mats.join(', ')+'</td><td>'+x.categoria+'</td><td>'+x.situacao+'</td><td>'+(x.manual?'<button class="lnk-del dsh-unmark" data-cpf="'+x.cpf+'" title="Desfazer: voltar a enviado">&#10005;</button>':'')+'</td></tr>';}).join(''):'<tr><td colspan="6" class="dsh-none">Nenhum pendente'+(t?' para a busca':'')+'.</td></tr>')+
       '</tbody></table>'+(rows.length>cap.length?'<div class="dsh-none">Mostrando '+LIM+' de '+rows.length.toLocaleString('pt-BR')+' — use a busca para achar um CPF/nome, ou exporte o .xlsx para a lista completa.</div>':'');
-  }else{
+  }else if(dshTab==='fora'){
     var rows2=c.fora; if(t){var dt2=onlyDigits(t); rows2=rows2.filter(function(x){return (dt2&&x.cpf.indexOf(dt2)>=0)||x.tipos.toLowerCase().indexOf(t)>=0||(x.nome&&x.nome.toLowerCase().indexOf(t)>=0);});}
     var cap2=rows2.slice(0,LIM), semNome=c.fora.some(function(x){return !x.nome;});
     $('#dshList').innerHTML='<table class="dsh-table"><thead><tr><th>CPF</th><th>Nome</th><th>Tipo(s) enviado(s)</th></tr></thead><tbody>'+
       (cap2.length?cap2.map(function(x){return '<tr><td class="mono">'+x.cpf+'</td><td>'+(x.nome||'<span class="dsh-none">—</span>')+'</td><td>'+x.tipos+'</td></tr>';}).join(''):'<tr><td colspan="3" class="dsh-none">Nenhum enviado fora da folha.</td></tr>')+'</tbody></table>'+
       (rows2.length>cap2.length?'<div class="dsh-none">Mostrando '+LIM+' de '+rows2.length.toLocaleString('pt-BR')+' — use a busca ou exporte o .xlsx.</div>':'')+
       (semNome?'<div class="dsh-none">Os nomes vazios vêm da base de servidores do Comparador (Ferramenta 1) — carregue a base lá para preenchê-los.</div>':'');
+  }else{
+    // TODOS os enviados (para conferir antes de marcar como pendente)
+    var folSet=new Set(dshFolha.map(function(x){return x.cpf;})), folName={};
+    dshFolha.forEach(function(x){ if(!folName[x.cpf]) folName[x.cpf]=x.nome; });
+    var rows3=[]; dshSent.forEach(function(tipos,cpf){ var rec=byCpf.get(cpf); rows3.push({cpf:cpf, nome:folName[cpf]||(rec&&rec[0]&&rec[0].NOME)||'', tipos:Array.from(tipos).join(', '), inFolha:folSet.has(cpf), manual:dshForcePend.has(cpf)}); });
+    if(t){var dt3=onlyDigits(t); rows3=rows3.filter(function(x){return (dt3&&x.cpf.indexOf(dt3)>=0)||(x.nome&&x.nome.toLowerCase().indexOf(t)>=0);});}
+    rows3.sort(function(a,b){return a.cpf.localeCompare(b.cpf);});
+    var cap3=rows3.slice(0,LIM);
+    $('#dshList').innerHTML='<table class="dsh-table"><thead><tr><th>CPF</th><th>Nome</th><th>Tipo(s)</th><th>Na folha?</th><th></th></tr></thead><tbody>'+
+      (cap3.length?cap3.map(function(x){return '<tr><td class="mono">'+x.cpf+'</td><td>'+(x.nome||'<span class="dsh-none">—</span>')+(x.manual?'<span class="mantag">pendente (manual)</span>':'')+'</td><td>'+x.tipos+'</td><td>'+(x.inFolha?'sim':'<span style="color:var(--warn)">não</span>')+'</td><td>'+(x.inFolha&&!x.manual?'<button class="lnk-del dsh-domark" data-cpf="'+x.cpf+'" title="Marcar como pendente (não enviado)">marcar pend.</button>':(x.manual?'<button class="lnk-del dsh-unmark" data-cpf="'+x.cpf+'" title="Desfazer">&#10005;</button>':''))+'</td></tr>';}).join(''):'<tr><td colspan="5" class="dsh-none">Nenhum enviado.</td></tr>')+'</tbody></table>'+
+      (rows3.length>cap3.length?'<div class="dsh-none">Mostrando '+LIM+' de '+rows3.length.toLocaleString('pt-BR')+' enviados — use a busca (CPF/nome) ou exporte o .xlsx.</div>':'');
   }
 }
 function dshExport(){
@@ -2014,7 +2027,7 @@ function dshWire(){
   $('#dshClear').addEventListener('click',dshClear);
   $('#dshMarkBtn').addEventListener('click',function(){ dshMarkPend($('#dshMarkCpf').value); $('#dshMarkCpf').value=''; });
   $('#dshMarkCpf').addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); dshMarkPend(this.value); this.value=''; } });
-  $('#dshList').addEventListener('click',function(e){ var b=e.target.closest('.dsh-unmark'); if(b) dshUnmarkPend(b.getAttribute('data-cpf')); });
+  $('#dshList').addEventListener('click',function(e){ var u=e.target.closest('.dsh-unmark'); if(u){ dshUnmarkPend(u.getAttribute('data-cpf')); return; } var m=e.target.closest('.dsh-domark'); if(m) dshMarkPend(m.getAttribute('data-cpf')); });
   // histórico
   $('#dshAddHist').addEventListener('click',dshAddCurrent);
   $('#dshHistXlsx').addEventListener('click',dshHistXlsx);
@@ -2158,7 +2171,13 @@ function inssRenderList(c){
   var t=inssSearchT.toLowerCase(), dt=onlyDigits(t);
   function filt(arr){ if(!t) return arr; return arr.filter(function(x){ return (dt&&x.cpf.indexOf(dt)>=0)||(x.nome&&x.nome.toLowerCase().indexOf(t)>=0); }); }
   var html;
-  if(inssTab==='faltaEso'||inssTab==='faltaFolha'){
+  if(inssTab==='todosEso'){
+    var all=Array.from(inssEso.values()).map(function(e){ var f=inssFolha.get(e.cpf); return {cpf:e.cpf, nome:(f&&f.nome)||'', cat:e.cat, base:e.base, inss:e.inss}; });
+    all=filt(all).sort(function(a,b){return a.cpf.localeCompare(b.cpf);});
+    html='<div class="dsh-none" style="margin:0 0 8px">'+all.length.toLocaleString('pt-BR')+' CPF(s) enviado(s) ao eSocial (S-5001).</div>'+
+      '<table class="dsh-table"><thead><tr><th>CPF</th><th>Nome</th><th>Categoria</th><th>Base</th><th>INSS (segurado)</th></tr></thead><tbody>'+
+      (all.length?all.map(function(x){return '<tr><td class="mono">'+x.cpf+'</td><td>'+(x.nome||'—')+'</td><td>'+(x.cat||'')+'</td><td>'+fmtBR(x.base)+'</td><td>'+fmtBR(x.inss)+'</td></tr>';}).join(''):'<tr><td colspan="5" class="dsh-none">Nenhum enviado.</td></tr>')+'</tbody></table>';
+  } else if(inssTab==='faltaEso'||inssTab==='faltaFolha'){
     var arr=filt(inssTab==='faltaEso'?c.faltaEso:c.faltaFolha);
     html='<table class="dsh-table"><thead><tr><th>CPF</th><th>Nome / Categoria</th><th>Base</th><th>INSS</th></tr></thead><tbody>'+
       (arr.length?arr.map(function(x){return '<tr><td class="mono">'+x.cpf+'</td><td>'+(x.nome||x.cat||'—')+'</td><td>'+fmtBR(x.base)+'</td><td>'+fmtBR(x.inss)+'</td></tr>';}).join(''):'<tr><td colspan="4" class="dsh-none">Nenhum.</td></tr>')+'</tbody></table>';
