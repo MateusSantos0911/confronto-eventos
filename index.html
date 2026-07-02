@@ -245,6 +245,17 @@
   /* ===== botão de tema ===== */
   .theme-btn{margin-left:auto}
 
+  /* ===== tabela DCTFWeb (Ferramenta 3) ===== */
+  #inssParams{margin-bottom:14px}
+  .dctf-table{width:100%;border-collapse:collapse;font-size:13px;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .dctf-table th,.dctf-table td{padding:8px 12px;border-bottom:1px solid var(--line-soft);text-align:right;font-variant-numeric:tabular-nums}
+  .dctf-table th.l,.dctf-table td.l{text-align:left}
+  .dctf-table thead th{background:#3f9aa6;color:#fff;font-size:11px;text-transform:uppercase;letter-spacing:.04em;border-bottom:none}
+  .dctf-table thead th.saldo{background:#c0392b}
+  .dctf-table tr:last-child td{border-bottom:none}
+  .dctf-table tr.tot td{font-weight:700;background:var(--line-soft)}
+  .dctf-table tr.ci td{color:var(--muted)}
+
   /* ===== TEMA ESCURO ===== */
   html[data-theme="dark"]{
     --bg:#070e1c; --surface:#0f1b30; --ink:#e7eefb; --muted:#93a6c4;
@@ -547,9 +558,9 @@
       <button class="lcard" data-tool="tool-3">
         <span class="lcard-n">3</span>
         <span class="lcard-ic">&#10022;</span>
-        <span class="lcard-t">A definir</span>
-        <span class="lcard-d">Terceira ferramenta &mdash; a definir com voc&ecirc;.</span>
-        <span class="lcard-go lcard-soon">Em breve</span>
+        <span class="lcard-t">Confer&ecirc;ncia de INSS (RGPS)</span>
+        <span class="lcard-d">Folha &times; eSocial (S-5001): faltantes e diverg&ecirc;ncias de base/INSS, e c&aacute;lculo dos valores da DCTFWeb.</span>
+        <span class="lcard-go">Abrir &rarr;</span>
       </button>
     </div>
   </div>
@@ -797,12 +808,54 @@
 </div>
 
 <div class="wrap screen" id="tool-3">
-  <div class="toolbar"><button class="btn-home" data-home type="button">&larr; In&iacute;cio</button><span class="toolbar-name">Ferramenta 3 &middot; a definir</span></div>
-  <div class="soon">
-    <div class="soon-ic">&#10022;</div>
-    <div class="soon-t">A definir</div>
-    <div class="soon-d">Esta terceira ferramenta ainda ser&aacute; definida. Assim que voc&ecirc; escolher o objetivo dela, a gente monta esta tela.</div>
+  <div class="toolbar"><button class="btn-home" data-home type="button">&larr; In&iacute;cio</button><span class="toolbar-name">Ferramenta 3 &middot; Confer&ecirc;ncia de INSS (RGPS)</span></div>
+
+  <header class="app">
+    <div class="brand">
+      <div class="eyebrow">PGE-RJ &middot; eSocial &mdash; INSS RGPS &times; DCTFWeb</div>
+      <h1>Confer&ecirc;ncia de INSS (RGPS)</h1>
+    </div>
+    <div class="basebox"><button id="inssClear">Limpar</button></div>
+  </header>
+
+  <div class="rules" id="inssParams">
+    <div class="rules-grid">
+      <label>GILRAT ajustado (%)<input type="text" id="inssGilrat" inputmode="decimal"><small>RAT &times; FAP. Ex.: 1</small></label>
+      <label>Al&iacute;quota patronal (%)<input type="text" id="inssPatronal" inputmode="decimal"><small>Padr&atilde;o 20</small></label>
+      <label>Sal&aacute;rio-maternidade (R$)<input type="text" id="inssSm" inputmode="decimal"><small>Dedu&ccedil;&atilde;o do patronal. Padr&atilde;o 0</small></label>
+    </div>
   </div>
+
+  <div class="dsh-steps">
+    <div class="drop compact" id="inssDropFolha">
+      <div class="ic">&#9312;</div>
+      <div><div class="big" style="font-size:14px">Folha RGPS</div><div class="sub" id="inssFolhaStatus">Arraste a folha (.csv) &mdash; CPF, VLBASE, VLINSS, NOME, CATEGORIA</div></div>
+      <input type="file" id="inssFileFolha" accept=".csv" class="hidden">
+    </div>
+    <div class="drop compact" id="inssDropEso">
+      <div class="ic">&#9313;</div>
+      <div><div class="big" style="font-size:14px">eSocial S-5001</div><div class="sub" id="inssEsoStatus">Arraste o S-5001 (.csv) &mdash; apura&ccedil;&atilde;o por trabalhador</div></div>
+      <input type="file" id="inssFileEso" accept=".csv" class="hidden">
+    </div>
+  </div>
+
+  <div id="inssResults" class="hidden">
+    <div id="inssDctf"></div>
+    <div class="cards" id="inssCards"></div>
+    <div class="controls">
+      <input type="search" id="inssSearch" placeholder="Buscar por CPF ou nome&hellip;">
+      <div class="chips" id="inssTabs">
+        <button class="chip cwarn" data-tab="faltaEso" aria-pressed="true">Falta no eSocial</button>
+        <button class="chip cign" data-tab="faltaFolha" aria-pressed="false">Falta na folha</button>
+        <button class="chip c1202" data-tab="divBase" aria-pressed="false">Diverg&ecirc;ncia base</button>
+        <button class="chip c1207" data-tab="divInss" aria-pressed="false">Diverg&ecirc;ncia INSS</button>
+      </div>
+      <button class="btn-export" id="inssExport">Exportar .xlsx</button>
+    </div>
+    <div id="inssList"></div>
+  </div>
+
+  <div id="inssPlaceholder" class="empty">Carregue a folha RGPS (&#9312;) e o S-5001 do eSocial (&#9313;) para comparar e calcular a DCTFWeb. Tudo roda no seu navegador.</div>
 </div>
 
 <script>/*! xlsx.js (C) 2013-present SheetJS -- http://sheetjs.com */
@@ -1829,6 +1882,168 @@ function dshWire(){
   dshHistLoad(); dshRenderHist();
 }
 
+/* ================= Ferramenta 3: Conferência de INSS (RGPS) ================= */
+function parseCSVarr(text){
+  text=text.replace(/^﻿/,'');
+  var nl=text.indexOf('\n'), first=nl>0?text.slice(0,nl):text, delim=detectDelim(first);
+  var rows=[],row=[],field='',q=false;
+  for(var i=0;i<text.length;i++){ var ch=text[i];
+    if(q){ if(ch==='"'){ if(text[i+1]==='"'){field+='"';i++;} else q=false; } else field+=ch; }
+    else { if(ch==='"') q=true; else if(ch===delim){row.push(field);field='';} else if(ch==='\n'){row.push(field);rows.push(row);row=[];field='';} else if(ch==='\r'){} else field+=ch; }
+  }
+  if(field!==''||row.length){ row.push(field); rows.push(row); }
+  if(!rows.length) return {head:[],rows:[]};
+  return {head:rows[0].map(function(h){return h.trim();}), rows:rows.slice(1).filter(function(r){return r.some(function(c){return c!==''&&c!=null;});})};
+}
+function idxOf(head){ var needles=[].slice.call(arguments,1);
+  for(var n=0;n<needles.length;n++){ var t=needles[n].toLowerCase().replace(/[^a-z0-9]/g,'');
+    for(var i=0;i<head.length;i++){ if((head[i]||'').toLowerCase().replace(/[^a-z0-9]/g,'').indexOf(t)>=0) return i; } }
+  return -1;
+}
+var INSS_PARAMS_KEY='esocial_inss_params';
+var inssParams={gilrat:1, patronal:20, sm:0};
+var inssFolha=new Map();   // cpf -> {cpf,nome,mat,cat,base,inss}
+var inssEso=new Map();     // cpf -> {cpf,cat,base,inss,segEmp,segCI,baseEmp,baseCI}
+var inssTab='faltaEso', inssSearchT='';
+function inssLoadParams(){ try{var s=JSON.parse(localStorage.getItem(INSS_PARAMS_KEY)); if(s&&typeof s==='object') inssParams=Object.assign(inssParams,s);}catch(e){} }
+function inssSaveParams(){ try{localStorage.setItem(INSS_PARAMS_KEY,JSON.stringify(inssParams));}catch(e){} }
+function inssReadFolha(file){
+  readFile(file,function(txt){
+    var p=parseCSVarr(txt), h=p.head;
+    var iCpf=idxOf(h,'cpf'), iNome=idxOf(h,'nome'), iBase=idxOf(h,'vlbase'), iInss=idxOf(h,'vlinss'), iNf=idxOf(h,'numfunc'), iNv=idxOf(h,'numvinc'), iCat=idxOf(h,'categoria');
+    if(iCpf<0||iBase<0||iInss<0){ alert('Folha: preciso das colunas CPF, VLBASE e VLINSS.'); return; }
+    inssFolha=new Map();
+    p.rows.forEach(function(r){
+      var cpf=padCpf(r[iCpf]); if(!cpf||cpf==='00000000000') return;
+      if(!inssFolha.has(cpf)) inssFolha.set(cpf,{cpf:cpf,nome:(iNome>=0?r[iNome]:'')||'',mat:(iNf>=0?(r[iNf]||''):'')+'/'+(iNv>=0?(r[iNv]||''):''),cat:(iCat>=0?r[iCat]:'')||'',base:0,inss:0});
+      var o=inssFolha.get(cpf); o.base+=(parseBR(r[iBase])||0); o.inss+=(parseBR(r[iInss])||0);
+    });
+    $('#inssFolhaStatus').innerHTML='Folha carregada: <b>'+inssFolha.size.toLocaleString('pt-BR')+'</b> CPF(s).';
+    inssRender();
+  });
+}
+function inssReadEso(file){
+  readFile(file,function(txt){
+    var p=parseCSVarr(txt), h=p.head;
+    var iCpf=idxOf(h,'cpftrabalhador','cpf'), iCod=idxOf(h,'codigodereceita'), iDesc=idxOf(h,'valordescontadodosegurado'), iCat=idxOf(h,'categoria'), iTv=idxOf(h,'tipodevalor'), iBase=idxOf(h,'valordabasedecalculo');
+    if(iCpf<0||iDesc<0||iBase<0){ alert('S-5001: não encontrei CPF / valor descontado / base de cálculo.'); return; }
+    inssEso=new Map(); var segSeen={}, baseSeen={};
+    p.rows.forEach(function(r){
+      var cpf=padCpf(r[iCpf]); if(!cpf) return;
+      var cod=(iCod>=0?(r[iCod]||''):'').trim(), cat=(iCat>=0?(r[iCat]||''):'').trim(), tv=(iTv>=0?(r[iTv]||''):'').trim(), isCI=(cat.charAt(0)==='7');
+      if(!inssEso.has(cpf)) inssEso.set(cpf,{cpf:cpf,cat:cat,base:0,inss:0,segEmp:0,segCI:0,baseEmp:0,baseCI:0});
+      var e=inssEso.get(cpf); if(cat) e.cat=cat;
+      var sk=cpf+'|'+cod; if(!(sk in segSeen)){ segSeen[sk]=1; var d=parseBR(r[iDesc])||0; e.inss+=d; if(isCI)e.segCI+=d; else e.segEmp+=d; }
+      if(tv==='11'){ var bv=parseBR(r[iBase]); if(bv){ var bk=cpf+'|'+cod+'|'+r[iBase]; if(!(bk in baseSeen)){ baseSeen[bk]=1; e.base+=bv; if(isCI)e.baseCI+=bv; else e.baseEmp+=bv; } } }
+    });
+    $('#inssEsoStatus').innerHTML='eSocial (S-5001): <b>'+inssEso.size.toLocaleString('pt-BR')+'</b> CPF(s).';
+    inssRender();
+  });
+}
+function inssCompute(){
+  var tol=0.01, faltaEso=[], faltaFolha=[], divBase=[], divInss=[];
+  inssFolha.forEach(function(f,cpf){
+    var e=inssEso.get(cpf);
+    if(!e){ faltaEso.push(f); return; }
+    if(Math.abs(f.base-e.base)>tol) divBase.push({cpf:cpf,nome:f.nome,mat:f.mat,folha:f.base,eso:e.base,dif:+(f.base-e.base).toFixed(2)});
+    if(Math.abs(f.inss-e.inss)>tol) divInss.push({cpf:cpf,nome:f.nome,mat:f.mat,folha:f.inss,eso:e.inss,dif:+(f.inss-e.inss).toFixed(2)});
+  });
+  inssEso.forEach(function(e,cpf){ if(!inssFolha.has(cpf)) faltaFolha.push(e); });
+  var baseEmp=0,baseCI=0,segEmp=0,segCI=0;
+  inssEso.forEach(function(e){ baseEmp+=e.baseEmp; baseCI+=e.baseCI; segEmp+=e.segEmp; segCI+=e.segCI; });
+  var pat=(inssParams.patronal||0)/100, gil=(inssParams.gilrat||0)/100, sm=inssParams.sm||0;
+  var patronal=+(baseEmp*pat).toFixed(2), gilrat=+(baseEmp*gil).toFixed(2), patCI=+(baseCI*pat).toFixed(2);
+  var d={ segEmp:+segEmp.toFixed(2), patronal:patronal, gilrat:gilrat, sm:sm, patronalLiq:+(patronal-sm).toFixed(2),
+    segCI:+segCI.toFixed(2), patCI:patCI, baseEmp:+baseEmp.toFixed(2), baseCI:+baseCI.toFixed(2) };
+  d.totalDeb=+(d.segEmp+patronal+gilrat+d.segCI+patCI).toFixed(2);
+  d.saldo=+(d.totalDeb-sm).toFixed(2);
+  return {faltaEso:faltaEso,faltaFolha:faltaFolha,divBase:divBase,divInss:divInss,dctf:d};
+}
+function inssRow(lbl,val,ded,saldo){ return '<tr><td class="l">'+lbl+'</td><td>'+fmtBR(val)+'</td><td>'+(ded?fmtBR(ded):'-')+'</td><td>'+fmtBR(saldo)+'</td></tr>'; }
+function inssCard(cls,lab,num,meta){ return '<div class="card '+cls+'"><div class="lab">'+lab+'</div><div class="num">'+(typeof num==='number'?num.toLocaleString('pt-BR'):num)+'</div><div class="meta">'+meta+'</div></div>'; }
+function inssRender(){
+  var has=inssFolha.size>0||inssEso.size>0;
+  $('#inssPlaceholder').classList.toggle('hidden',has);
+  $('#inssResults').classList.toggle('hidden',!has);
+  if(!has) return;
+  var c=inssCompute(), d=c.dctf;
+  $('#inssDctf').innerHTML='<div class="dsh-panel"><h3>Valores apurados para a DCTFWeb (a partir do eSocial S-5001)</h3>'+
+    '<table class="dctf-table"><thead><tr><th class="l">Débito apurado</th><th>Valor</th><th>Dedução (Sal-Mat)</th><th class="saldo">Saldo a pagar</th></tr></thead><tbody>'+
+    inssRow('1082-01 CP Segurados — empregados/avulsos', d.segEmp, 0, d.segEmp)+
+    inssRow('1138-01 CP Patronal — empregados/avulsos', d.patronal, d.sm, d.patronalLiq)+
+    inssRow('1646-01 CP Patronal — GILRAT ajustado ('+inssParams.gilrat+'%)', d.gilrat, 0, d.gilrat)+
+    ((d.segCI||d.patCI)? '<tr class="ci"><td class="l">Contribuinte individual (segurado 1099 + patronal '+inssParams.patronal+'%)</td><td>'+fmtBR(d.segCI+d.patCI)+'</td><td>-</td><td>'+fmtBR(d.segCI+d.patCI)+'</td></tr>':'')+
+    '<tr class="tot"><td class="l">Total</td><td>'+fmtBR(d.totalDeb)+'</td><td>'+fmtBR(d.sm)+'</td><td>'+fmtBR(d.saldo)+'</td></tr>'+
+    '</tbody></table><div class="dsh-none">Base empregados: '+fmtBR(d.baseEmp)+' &middot; Base CI: '+fmtBR(d.baseCI)+' &middot; patronal '+inssParams.patronal+'% &middot; GILRAT '+inssParams.gilrat+'% &middot; SM '+fmtBR(d.sm)+'</div></div>';
+  $('#inssCards').innerHTML=
+    inssCard('etot','CPFs na folha',inssFolha.size,'RGPS')+
+    inssCard('e1202','CPFs no eSocial',inssEso.size,'S-5001')+
+    inssCard('ewarn','Falta no eSocial',c.faltaEso.length,'na folha, sem apuração')+
+    inssCard('eign','Falta na folha',c.faltaFolha.length,'apurado, fora da folha')+
+    inssCard('e1207','Divergências',c.divBase.length+c.divInss.length,c.divBase.length+' base · '+c.divInss.length+' INSS');
+  inssRenderList(c);
+}
+function inssRenderList(c){
+  var t=inssSearchT.toLowerCase(), dt=onlyDigits(t);
+  function filt(arr){ if(!t) return arr; return arr.filter(function(x){ return (dt&&x.cpf.indexOf(dt)>=0)||(x.nome&&x.nome.toLowerCase().indexOf(t)>=0); }); }
+  var html;
+  if(inssTab==='faltaEso'||inssTab==='faltaFolha'){
+    var arr=filt(inssTab==='faltaEso'?c.faltaEso:c.faltaFolha);
+    html='<table class="dsh-table"><thead><tr><th>CPF</th><th>Nome / Categoria</th><th>Base</th><th>INSS</th></tr></thead><tbody>'+
+      (arr.length?arr.map(function(x){return '<tr><td class="mono">'+x.cpf+'</td><td>'+(x.nome||x.cat||'—')+'</td><td>'+fmtBR(x.base)+'</td><td>'+fmtBR(x.inss)+'</td></tr>';}).join(''):'<tr><td colspan="4" class="dsh-none">Nenhum.</td></tr>')+'</tbody></table>';
+  } else {
+    var arr2=filt(inssTab==='divBase'?c.divBase:c.divInss), lbl=inssTab==='divBase'?'Base':'INSS';
+    html='<table class="dsh-table"><thead><tr><th>CPF</th><th>Nome</th><th>Matrícula</th><th>'+lbl+' folha</th><th>'+lbl+' eSocial</th><th>Diferença</th></tr></thead><tbody>'+
+      (arr2.length?arr2.map(function(x){return '<tr><td class="mono">'+x.cpf+'</td><td>'+(x.nome||'—')+'</td><td class="mono">'+(x.mat||'')+'</td><td>'+fmtBR(x.folha)+'</td><td>'+fmtBR(x.eso)+'</td><td>'+fmtBR(x.dif)+'</td></tr>';}).join(''):'<tr><td colspan="6" class="dsh-none">Nenhuma divergência.</td></tr>')+'</tbody></table>';
+  }
+  $('#inssList').innerHTML=html;
+}
+function inssExport(){
+  if(!(inssFolha.size||inssEso.size)) return;
+  var c=inssCompute(), d=c.dctf, wb=XLSX.utils.book_new();
+  var res=[['Conferência INSS (RGPS) — folha × eSocial'],[],
+    ['DCTFWeb (apurado do eSocial S-5001)'],['Código / item','Débito','Dedução SM','Saldo'],
+    ['1082-01 CP Segurados (empreg/avulso)',d.segEmp,0,d.segEmp],
+    ['1138-01 CP Patronal (empreg/avulso)',d.patronal,d.sm,d.patronalLiq],
+    ['1646-01 GILRAT ajustado ('+inssParams.gilrat+'%)',d.gilrat,0,d.gilrat],
+    ['Contribuinte individual (1099 seg + patronal)',d.segCI+d.patCI,0,d.segCI+d.patCI],
+    ['TOTAL',d.totalDeb,d.sm,d.saldo],[],
+    ['Base empregados',d.baseEmp],['Base CI',d.baseCI],
+    ['CPFs folha',inssFolha.size],['CPFs eSocial',inssEso.size],
+    ['Falta no eSocial',c.faltaEso.length],['Falta na folha',c.faltaFolha.length],
+    ['Divergência base',c.divBase.length],['Divergência INSS',c.divInss.length],
+    ['Gerado em',new Date().toLocaleString('pt-BR')]];
+  var wsR=XLSX.utils.aoa_to_sheet(res); wsR['!cols']=[{wch:38},{wch:14},{wch:12},{wch:14}]; XLSX.utils.book_append_sheet(wb,wsR,'DCTFWeb + Resumo');
+  function add(name,arr,cols){ var ws=XLSX.utils.aoa_to_sheet([cols].concat(arr)); ws['!cols']=cols.map(function(){return {wch:16};}); if(arr.length)ws['!autofilter']={ref:'A1:'+String.fromCharCode(64+cols.length)+(arr.length+1)}; XLSX.utils.book_append_sheet(wb,ws,name); }
+  add('Falta no eSocial',c.faltaEso.map(function(x){return [x.cpf,x.nome,x.base,x.inss];}),['CPF','Nome','Base','INSS']);
+  add('Falta na folha',c.faltaFolha.map(function(x){return [x.cpf,x.cat,x.base,x.inss];}),['CPF','Categoria','Base','INSS']);
+  add('Diverg base',c.divBase.map(function(x){return [x.cpf,x.nome,x.mat,x.folha,x.eso,x.dif];}),['CPF','Nome','Matrícula','Base folha','Base eSocial','Diferença']);
+  add('Diverg INSS',c.divInss.map(function(x){return [x.cpf,x.nome,x.mat,x.folha,x.eso,x.dif];}),['CPF','Nome','Matrícula','INSS folha','INSS eSocial','Diferença']);
+  XLSX.writeFile(wb,'conferencia_inss_dctfweb.xlsx');
+}
+function inssClear(){
+  inssFolha=new Map(); inssEso=new Map(); inssSearchT='';
+  $('#inssFolhaStatus').innerHTML='Arraste a folha (.csv) &mdash; CPF, VLBASE, VLINSS, NOME, CATEGORIA';
+  $('#inssEsoStatus').innerHTML='Arraste o S-5001 (.csv) &mdash; apura&ccedil;&atilde;o por trabalhador';
+  var s=$('#inssSearch'); if(s) s.value='';
+  inssRender();
+}
+function inssFillParams(){ $('#inssGilrat').value=inssParams.gilrat; $('#inssPatronal').value=inssParams.patronal; $('#inssSm').value=inssParams.sm; }
+function inssReadParams(){ inssParams.gilrat=parseBR($('#inssGilrat').value)||0; inssParams.patronal=parseBR($('#inssPatronal').value)||0; inssParams.sm=parseBR($('#inssSm').value)||0; inssSaveParams(); inssRender(); }
+function inssWire(){
+  var df=$('#inssDropFolha'), fif=$('#inssFileFolha'); df.addEventListener('click',function(){fif.click();}); fif.addEventListener('change',function(e){ if(e.target.files[0]) inssReadFolha(e.target.files[0]); e.target.value=''; });
+  var de=$('#inssDropEso'), fie=$('#inssFileEso'); de.addEventListener('click',function(){fie.click();}); fie.addEventListener('change',function(e){ if(e.target.files[0]) inssReadEso(e.target.files[0]); e.target.value=''; });
+  [df,de].forEach(function(z){ ['dragover','dragenter'].forEach(function(ev){z.addEventListener(ev,function(e){e.preventDefault();z.classList.add('over');});}); z.addEventListener('dragleave',function(e){e.preventDefault();z.classList.remove('over');}); });
+  df.addEventListener('drop',function(e){e.preventDefault();df.classList.remove('over'); if(e.dataTransfer.files[0]) inssReadFolha(e.dataTransfer.files[0]);});
+  de.addEventListener('drop',function(e){e.preventDefault();de.classList.remove('over'); if(e.dataTransfer.files[0]) inssReadEso(e.dataTransfer.files[0]);});
+  ['inssGilrat','inssPatronal','inssSm'].forEach(function(id){ $('#'+id).addEventListener('change',inssReadParams); });
+  $('#inssSearch').addEventListener('input',function(e){ inssSearchT=e.target.value.trim(); inssRenderList(inssCompute()); });
+  $('#inssTabs').addEventListener('click',function(e){ var b=e.target.closest('.chip'); if(!b)return; inssTab=b.dataset.tab; document.querySelectorAll('#inssTabs .chip').forEach(function(x){x.setAttribute('aria-pressed',x===b);}); inssRenderList(inssCompute()); });
+  $('#inssExport').addEventListener('click',inssExport);
+  $('#inssClear').addEventListener('click',inssClear);
+  inssLoadParams(); inssFillParams();
+}
+
 /* ---- tema claro/escuro ---- */
 function applyTheme(t){
   document.documentElement.setAttribute('data-theme',t);
@@ -1864,6 +2079,8 @@ $('#btnRulesReset').addEventListener('click',()=>{ RULES=Object.assign({},RULE_D
 
 // dashboard (Ferramenta 2)
 dshWire();
+// conferência INSS (Ferramenta 3)
+inssWire();
 
 // sessão salva? oferece retomar
 $('#btnResume').addEventListener('click',()=>{ restoreSession(); $('#resumeBar').classList.add('hidden'); });
