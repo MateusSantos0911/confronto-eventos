@@ -40,7 +40,7 @@
   .drop .sub{color:var(--muted);margin-top:5px;font-size:13px}
   .drop .ic{font-size:30px;line-height:1}
   .drop.compact{padding:16px;text-align:left;display:flex;align-items:center;gap:14px}
-  .drop.compact .ic{font-size:20px}
+  .drop.compact .ic{font-size:15px;font-weight:800;color:#fff;width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex:none;background:linear-gradient(150deg,#4b8bff,#1e51d6);box-shadow:0 3px 0 #163f9e,0 6px 12px rgba(30,81,214,.45),inset 0 1px 0 rgba(255,255,255,.4)}
 
   /* retomar sessão */
   .resumebar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;background:#EEF2FF;border:1px solid #C7D2FE;border-radius:11px;padding:12px 16px;margin-top:14px}
@@ -211,8 +211,13 @@
   .bar{display:flex;align-items:center;gap:9px;margin:6px 0;font-size:12.5px}
   .bar .lbl{width:104px;flex:none;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .bar .track{flex:1;height:16px;background:var(--line-soft);border-radius:5px;overflow:hidden}
-  .bar .fill{height:100%;border-radius:5px;background:var(--s1202);min-width:2px}
+  .bar .fill{display:block;height:100%;border-radius:5px;background:var(--s1202);min-width:2px}
   .bar .fill.g{background:var(--just)} .bar .fill.w{background:var(--warn)}
+  .mantag{font-size:10px;font-weight:700;color:#92400E;background:#FEF3C7;padding:1px 6px;border-radius:5px;margin-left:6px}
+  html[data-theme="dark"] .mantag{color:#f5c869;background:rgba(245,181,68,.18)}
+  .dsh-markpend{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:2px 0 12px;font-size:12.5px;color:var(--muted)}
+  .dsh-markpend input{font:inherit;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);width:190px}
+  .dsh-markpend input:focus{outline:2px solid var(--s1202);outline-offset:-1px;border-color:transparent}
   .bar .val{width:96px;flex:none;text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
   .dsh-table{width:100%;border-collapse:collapse;font-size:12.5px;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
   .dsh-table th,.dsh-table td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line-soft)}
@@ -247,9 +252,9 @@
   .theme-btn{margin-left:auto}
 
   /* ===== personalização: marca d'água PGE + acentos ===== */
-  .wm{position:fixed;right:-60px;bottom:-40px;width:560px;opacity:.055;pointer-events:none;z-index:0;filter:invert(1)}
+  .wm{position:fixed;left:50%;top:54%;transform:translate(-50%,-50%);width:680px;max-width:84vw;opacity:.09;pointer-events:none;z-index:0;filter:invert(1)}
   .wm svg{width:100%;height:auto;display:block}
-  html[data-theme="dark"] .wm{filter:none;opacity:.05}
+  html[data-theme="dark"] .wm{filter:none;opacity:.075}
   .wrap.screen{position:relative;z-index:1}
   header.app{position:relative;border-bottom:none;padding-bottom:16px}
   header.app::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;border-radius:3px;background:linear-gradient(90deg,#2f6bff,#3b9dff 35%,transparent 80%)}
@@ -869,7 +874,7 @@
 
   <div class="dsh-steps">
     <div class="drop compact" id="dshDropFolha">
-      <div class="ic">&#9312;</div>
+      <div class="ic">1</div>
       <div>
         <div class="big" style="font-size:14px">Folha (eventos esperados)</div>
         <div class="sub" id="dshFolhaStatus">Arraste a planilha da folha (.xlsx) &mdash; colunas NUMFUNC, CPF, NOME, CATEGORIA, SITUACAO, COMPETENCIA</div>
@@ -877,7 +882,7 @@
       <input type="file" id="dshFileFolha" accept=".xlsx,.csv" class="hidden">
     </div>
     <div class="drop compact" id="dshDropJson">
-      <div class="ic">&#9313;</div>
+      <div class="ic">2</div>
       <div>
         <div class="big" style="font-size:14px">Eventos enviados</div>
         <div class="sub" id="dshJsonStatus">Arraste 1 ou mais arquivos .json exportados da ferramenta de envio (S-1200 / S-1202 / S-1207)</div>
@@ -902,6 +907,11 @@
       </div>
       <button class="hb-btn" id="dshAddHist">Salvar no hist&oacute;rico</button>
       <button class="btn-export" id="dshExport">Exportar .xlsx</button>
+    </div>
+    <div class="dsh-markpend">
+      <span>Gerado mas <b>n&atilde;o enviado</b>? Marque o CPF como pendente:</span>
+      <input type="text" id="dshMarkCpf" inputmode="numeric" placeholder="Digite o CPF&hellip;">
+      <button class="hb-btn ghost" id="dshMarkBtn">Marcar como pendente</button>
     </div>
     <div id="dshList"></div>
   </div>
@@ -946,12 +956,12 @@
 
   <div class="dsh-steps">
     <div class="drop compact" id="inssDropFolha">
-      <div class="ic">&#9312;</div>
+      <div class="ic">1</div>
       <div><div class="big" style="font-size:14px">Folha RGPS</div><div class="sub" id="inssFolhaStatus">Arraste a folha (.csv) &mdash; CPF, VLBASE, VLINSS, NOME, CATEGORIA</div></div>
       <input type="file" id="inssFileFolha" accept=".csv" class="hidden">
     </div>
     <div class="drop compact" id="inssDropEso">
-      <div class="ic">&#9313;</div>
+      <div class="ic">2</div>
       <div><div class="big" style="font-size:14px">eSocial S-5001</div><div class="sub" id="inssEsoStatus">Arraste o S-5001 (.csv) &mdash; apura&ccedil;&atilde;o por trabalhador</div></div>
       <input type="file" id="inssFileEso" accept=".csv" class="hidden">
     </div>
@@ -1718,6 +1728,12 @@ let dshFolha=[];                 // [{numfunc,numvinc,cpf,nome,categoria,situaca
 let dshSent=new Map();           // cpf -> Set(tipos enviados)
 let dshTypeEvents={'S-1200':0,'S-1202':0,'S-1207':0,'?':0};
 let dshJsonFiles=[]; let dshTab='pend'; let dshSearchT='';
+let dshForcePend=new Set(); const DASH_FP_KEY='esocial_dash_forcepend';  // CPFs marcados à mão como NÃO enviados (por competência)
+function dshFpComp(){ return (dshFolha.find(function(x){return x.comp;})||{}).comp||''; }
+function dshFpLoad(){ try{ var all=JSON.parse(localStorage.getItem(DASH_FP_KEY))||{}; dshForcePend=new Set(all[dshFpComp()]||[]); }catch(e){ dshForcePend=new Set(); } }
+function dshFpSave(){ try{ var all=JSON.parse(localStorage.getItem(DASH_FP_KEY))||{}; all[dshFpComp()]=Array.from(dshForcePend); localStorage.setItem(DASH_FP_KEY, JSON.stringify(all)); }catch(e){} }
+function dshMarkPend(cpf){ cpf=padCpf(cpf); if(!cpf){ alert('Digite um CPF válido.'); return; } if(!dshSent.has(cpf)){ alert('O CPF '+cpf+' não está entre os enviados desta competência — nada a marcar.'); return; } dshForcePend.add(cpf); dshFpSave(); dshRender(); }
+function dshUnmarkPend(cpf){ cpf=padCpf(cpf); dshForcePend.delete(cpf); dshFpSave(); dshRender(); }
 function dshFindKey(obj){ var needles=[].slice.call(arguments,1), ks=Object.keys(obj);
   for(var i=0;i<needles.length;i++){ var n=needles[i]; var k=ks.find(function(k){return k.toLowerCase().replace(/[^a-z0-9]/g,'').indexOf(n)>=0;}); if(k) return k; } return null; }
 function dshCompFrom(v){
@@ -1751,6 +1767,7 @@ function dshReadFolha(file){
       };}).filter(function(x){return x.cpf && x.cpf!=='00000000000';});
       var comp=(dshFolha.find(function(x){return x.comp;})||{}).comp||'';
       $('#dshFolhaStatus').innerHTML='Folha carregada: <b>'+dshFolha.length.toLocaleString('pt-BR')+'</b> servidor(es)'+(comp?' &middot; '+comp:'');
+      dshFpLoad();
       dshRender();
     }catch(e){ alert('Erro lendo a folha: '+e.message); }
   };
@@ -1798,7 +1815,8 @@ function dshCompute(){
   });
   var naFolha=0, pend=[], sitMap={}, catPend={};
   fol.forEach(function(o){
-    var s=sent.has(o.cpf);
+    var wasSent=sent.has(o.cpf), s=wasSent && !dshForcePend.has(o.cpf);
+    o.manual = wasSent && dshForcePend.has(o.cpf);
     if(s) naFolha++; else { pend.push(o); catPend[o.categoria]=(catPend[o.categoria]||0)+1; }
     if(!sitMap[o.situacao]) sitMap[o.situacao]={esp:0,env:0};
     sitMap[o.situacao].esp++; if(s) sitMap[o.situacao].env++;
@@ -1808,9 +1826,9 @@ function dshCompute(){
   fora.sort(function(a,b){ return (b.nome?1:0)-(a.nome?1:0) || a.cpf.localeCompare(b.cpf); });
   return {folha:fol.size, vinculos:dshFolha.length, sent:sent.size, naFolha:naFolha, pend:pend, fora:fora, cob: fol.size?(naFolha/fol.size*100):0, sitMap:sitMap, catPend:catPend};
 }
-function dshBar(lbl,val,max,cls,valTxt){
+function dshBar(lbl,val,max,color,valTxt){
   var pct=max>0?Math.round(val/max*100):0;
-  return '<div class="bar"><span class="lbl" title="'+lbl+'">'+lbl+'</span><span class="track"><span class="fill '+(cls||'')+'" style="width:'+pct+'%"></span></span><span class="val">'+(valTxt==null?val:valTxt)+'</span></div>';
+  return '<div class="bar"><span class="lbl" title="'+lbl+'">'+lbl+'</span><span class="track"><span class="fill" style="width:'+pct+'%;background:'+(color||'var(--s1202)')+'"></span></span><span class="val">'+(valTxt==null?val:valTxt)+'</span></div>';
 }
 function cssVar(n){ return (getComputedStyle(document.documentElement).getPropertyValue(n)||'').trim()||'#8aa2c7'; }
 function dshDonut(segs,big,small){
@@ -1859,27 +1877,29 @@ function dshRender(){
     (dshSent.size?'<div class="chartcard"><h3>Relação de eventos enviados</h3><div class="donut-wrap">'+dshDonut(tsegs, totEv.toLocaleString('pt-BR'), 'eventos')+dshLegend(tsegs)+'</div></div>':'')+
     '<div class="chartcard"><h3>Cobertura da folha</h3><div class="donut-wrap">'+dshDonut(covSegs, c.cob.toFixed(1)+'%', c.naFolha.toLocaleString('pt-BR')+' de '+c.folha.toLocaleString('pt-BR'))+dshLegend(covSegs)+'</div></div>';
   var types=['S-1200','S-1202','S-1207'], maxT=Math.max(1,dshTypeEvents['S-1200']||0,dshTypeEvents['S-1202']||0,dshTypeEvents['S-1207']||0,dshTypeEvents['?']||0);
-  $('#dshByType').innerHTML= dshSent.size ? (types.map(function(t){return dshBar(t,dshTypeEvents[t]||0,maxT,'',(dshTypeEvents[t]||0).toLocaleString('pt-BR'));}).join('')+((dshTypeEvents['?']||0)?dshBar('(tipo?)',dshTypeEvents['?'],maxT,'w',dshTypeEvents['?']):'')) : '<div class="dsh-none">Carregue os JSONs de enviados.</div>';
+  var typeCol={'S-1200':col1,'S-1202':col2,'S-1207':col7};
+  $('#dshByType').innerHTML= dshSent.size ? (types.map(function(t){return dshBar(t,dshTypeEvents[t]||0,maxT,typeCol[t],(dshTypeEvents[t]||0).toLocaleString('pt-BR'));}).join('')+((dshTypeEvents['?']||0)?dshBar('(tipo?)',dshTypeEvents['?'],maxT,cssVar('--warn'),dshTypeEvents['?']):'')) : '<div class="dsh-none">Carregue os JSONs de enviados.</div>';
   var sits=Object.keys(c.sitMap).sort(function(a,b){return c.sitMap[b].esp-c.sitMap[a].esp;});
-  $('#dshBySit').innerHTML= sits.length? sits.map(function(s){var o=c.sitMap[s], pc=o.esp?Math.round(o.env/o.esp*100):0; return dshBar(s,o.env,o.esp,(pc>=99?'g':''),o.env+'/'+o.esp+' ('+pc+'%)');}).join('') : '<div class="dsh-none">—</div>';
+  $('#dshBySit').innerHTML= sits.length? sits.map(function(s){var o=c.sitMap[s], pc=o.esp?Math.round(o.env/o.esp*100):0; return dshBar(s,o.env,o.esp,(pc>=100?cssVar('--just'):(pc>=90?cssVar('--s1200'):cssVar('--warn'))),o.env+'/'+o.esp+' ('+pc+'%)');}).join('') : '<div class="dsh-none">—</div>';
   var cats=Object.keys(c.catPend).sort(function(a,b){return c.catPend[b]-c.catPend[a];}).slice(0,8), maxC=Math.max.apply(null,[1].concat(cats.map(function(k){return c.catPend[k];})));
-  $('#dshByCat').innerHTML= cats.length? cats.map(function(k){return dshBar(k,c.catPend[k],maxC,'w',c.catPend[k]);}).join('') : '<div class="dsh-none">Sem pendentes 🎉</div>';
+  $('#dshByCat').innerHTML= cats.length? cats.map(function(k){return dshBar(k,c.catPend[k],maxC,cssVar('--warn'),c.catPend[k]);}).join('') : '<div class="dsh-none">Sem pendentes 🎉</div>';
   dshRenderList(c);
 }
 function dshRenderList(c){
-  var t=dshSearchT.toLowerCase();
+  var t=dshSearchT.toLowerCase(), LIM=5;
   if(dshTab==='pend'){
     var rows=c.pend;
     if(t){var dt=onlyDigits(t); rows=rows.filter(function(x){return x.nome.toLowerCase().indexOf(t)>=0||(dt&&x.cpf.indexOf(dt)>=0)||x.mats.join(' ').indexOf(t)>=0;});}
-    var cap=rows.slice(0,800);
-    $('#dshList').innerHTML='<table class="dsh-table"><thead><tr><th>CPF</th><th>Nome</th><th>Matrícula(s)</th><th>Categoria</th><th>Situação</th></tr></thead><tbody>'+
-      (cap.length?cap.map(function(x){return '<tr><td class="mono">'+x.cpf+'</td><td>'+x.nome+'</td><td class="mono">'+x.mats.join(', ')+'</td><td>'+x.categoria+'</td><td>'+x.situacao+'</td></tr>';}).join(''):'<tr><td colspan="5" class="dsh-none">Nenhum pendente'+(t?' para a busca':'')+'.</td></tr>')+
-      '</tbody></table>'+(rows.length>cap.length?'<div class="dsh-none">Mostrando 800 de '+rows.length.toLocaleString('pt-BR')+' — refine a busca ou exporte para ver todos.</div>':'');
+    var cap=rows.slice(0,LIM);
+    $('#dshList').innerHTML='<table class="dsh-table"><thead><tr><th>CPF</th><th>Nome</th><th>Matrícula(s)</th><th>Categoria</th><th>Situação</th><th></th></tr></thead><tbody>'+
+      (cap.length?cap.map(function(x){return '<tr'+(x.manual?' class="manrow"':'')+'><td class="mono">'+x.cpf+'</td><td>'+x.nome+(x.manual?'<span class="mantag">manual</span>':'')+'</td><td class="mono">'+x.mats.join(', ')+'</td><td>'+x.categoria+'</td><td>'+x.situacao+'</td><td>'+(x.manual?'<button class="lnk-del dsh-unmark" data-cpf="'+x.cpf+'" title="Desfazer: voltar a enviado">&#10005;</button>':'')+'</td></tr>';}).join(''):'<tr><td colspan="6" class="dsh-none">Nenhum pendente'+(t?' para a busca':'')+'.</td></tr>')+
+      '</tbody></table>'+(rows.length>cap.length?'<div class="dsh-none">Mostrando '+LIM+' de '+rows.length.toLocaleString('pt-BR')+' — use a busca para achar um CPF/nome, ou exporte o .xlsx para a lista completa.</div>':'');
   }else{
     var rows2=c.fora; if(t){var dt2=onlyDigits(t); rows2=rows2.filter(function(x){return (dt2&&x.cpf.indexOf(dt2)>=0)||x.tipos.toLowerCase().indexOf(t)>=0||(x.nome&&x.nome.toLowerCase().indexOf(t)>=0);});}
-    var semNome=c.fora.some(function(x){return !x.nome;});
+    var cap2=rows2.slice(0,LIM), semNome=c.fora.some(function(x){return !x.nome;});
     $('#dshList').innerHTML='<table class="dsh-table"><thead><tr><th>CPF</th><th>Nome</th><th>Tipo(s) enviado(s)</th></tr></thead><tbody>'+
-      (rows2.length?rows2.map(function(x){return '<tr><td class="mono">'+x.cpf+'</td><td>'+(x.nome||'<span class="dsh-none">—</span>')+'</td><td>'+x.tipos+'</td></tr>';}).join(''):'<tr><td colspan="3" class="dsh-none">Nenhum enviado fora da folha.</td></tr>')+'</tbody></table>'+
+      (cap2.length?cap2.map(function(x){return '<tr><td class="mono">'+x.cpf+'</td><td>'+(x.nome||'<span class="dsh-none">—</span>')+'</td><td>'+x.tipos+'</td></tr>';}).join(''):'<tr><td colspan="3" class="dsh-none">Nenhum enviado fora da folha.</td></tr>')+'</tbody></table>'+
+      (rows2.length>cap2.length?'<div class="dsh-none">Mostrando '+LIM+' de '+rows2.length.toLocaleString('pt-BR')+' — use a busca ou exporte o .xlsx.</div>':'')+
       (semNome?'<div class="dsh-none">Os nomes vazios vêm da base de servidores do Comparador (Ferramenta 1) — carregue a base lá para preenchê-los.</div>':'');
   }
 }
@@ -1900,7 +1920,7 @@ function dshExport(){
   XLSX.writeFile(wb,'dashboard_envio_'+((comp||'esocial').replace(/[\/ ]/g,'-'))+'.xlsx');
 }
 function dshClear(){
-  dshFolha=[]; dshSent=new Map(); dshTypeEvents={'S-1200':0,'S-1202':0,'S-1207':0,'?':0}; dshJsonFiles=[]; dshSearchT=''; dshTab='pend';
+  dshFolha=[]; dshSent=new Map(); dshTypeEvents={'S-1200':0,'S-1202':0,'S-1207':0,'?':0}; dshJsonFiles=[]; dshSearchT=''; dshTab='pend'; dshForcePend=new Set();
   $('#dshFolhaStatus').innerHTML='Arraste a planilha da folha (.xlsx) &mdash; colunas NUMFUNC, CPF, NOME, CATEGORIA, SITUACAO, COMPETENCIA';
   $('#dshJsonStatus').innerHTML='Arraste 1 ou mais arquivos .json exportados da ferramenta de envio (S-1200 / S-1202 / S-1207)';
   var sb=$('#dshSearch'); if(sb) sb.value='';
@@ -1989,6 +2009,9 @@ function dshWire(){
   $('#dshTabs').addEventListener('click',function(e){ var b=e.target.closest('.chip'); if(!b)return; dshTab=b.dataset.tab; document.querySelectorAll('#dshTabs .chip').forEach(function(x){x.setAttribute('aria-pressed', x===b);}); dshRender(); });
   $('#dshExport').addEventListener('click',dshExport);
   $('#dshClear').addEventListener('click',dshClear);
+  $('#dshMarkBtn').addEventListener('click',function(){ dshMarkPend($('#dshMarkCpf').value); $('#dshMarkCpf').value=''; });
+  $('#dshMarkCpf').addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); dshMarkPend(this.value); this.value=''; } });
+  $('#dshList').addEventListener('click',function(e){ var b=e.target.closest('.dsh-unmark'); if(b) dshUnmarkPend(b.getAttribute('data-cpf')); });
   // histórico
   $('#dshAddHist').addEventListener('click',dshAddCurrent);
   $('#dshHistXlsx').addEventListener('click',dshHistXlsx);
