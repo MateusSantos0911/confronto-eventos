@@ -277,6 +277,9 @@
   .dctf-table tr:last-child td{border-bottom:none}
   .dctf-table tr.tot td{font-weight:700;background:var(--line-soft)}
   .dctf-table tr.ci td{color:var(--muted)}
+  .dctf-two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:880px){ .dctf-two{grid-template-columns:1fr} }
+  .dctf-table tr.diffrow td{background:var(--warn-bg)}
 
   /* ===== TEMA ESCURO ===== */
   html[data-theme="dark"]{
@@ -2098,24 +2101,51 @@ function inssCompute(){
     segCI:+segCI.toFixed(2), patCI:patCI, baseEmp:+baseEmp.toFixed(2), baseCI:+baseCI.toFixed(2) };
   d.totalDeb=+(d.segEmp+patronal+gilrat+d.segCI+patCI).toFixed(2);
   d.saldo=+(d.totalDeb-sm).toFixed(2);
-  return {faltaEso:faltaEso,faltaFolha:faltaFolha,divBase:divBase,divInss:divInss,dctf:d};
+  // DCTFWeb a partir da FOLHA (ERGON): CI separado pela categoria do eSocial (join por CPF)
+  var baseEmpF=0,baseCIF=0,segEmpF=0,segCIF=0;
+  inssFolha.forEach(function(f){ var e=inssEso.get(f.cpf), isCI=e&&((e.cat||'').charAt(0)==='7'); if(isCI){ baseCIF+=f.base; segCIF+=f.inss; } else { baseEmpF+=f.base; segEmpF+=f.inss; } });
+  var patronalF=+(baseEmpF*pat).toFixed(2), gilratF=+(baseEmpF*gil).toFixed(2), patCIF=+(baseCIF*pat).toFixed(2);
+  var df={ segEmp:+segEmpF.toFixed(2), patronal:patronalF, gilrat:gilratF, sm:sm, patronalLiq:+(patronalF-sm).toFixed(2),
+    segCI:+segCIF.toFixed(2), patCI:patCIF, baseEmp:+baseEmpF.toFixed(2), baseCI:+baseCIF.toFixed(2) };
+  df.totalDeb=+(df.segEmp+patronalF+gilratF+df.segCI+patCIF).toFixed(2);
+  df.saldo=+(df.totalDeb-sm).toFixed(2);
+  return {faltaEso:faltaEso,faltaFolha:faltaFolha,divBase:divBase,divInss:divInss,dctf:d,dctfFolha:df};
 }
 function inssRow(lbl,val,ded,saldo){ return '<tr><td class="l">'+lbl+'</td><td>'+fmtBR(val)+'</td><td>'+(ded?fmtBR(ded):'-')+'</td><td>'+fmtBR(saldo)+'</td></tr>'; }
 function inssCard(cls,lab,num,meta){ return '<div class="card '+cls+'"><div class="lab">'+lab+'</div><div class="num">'+(typeof num==='number'?num.toLocaleString('pt-BR'):num)+'</div><div class="meta">'+meta+'</div></div>'; }
+function inssDctfTable(d,title){
+  return '<div class="dsh-panel"><h3>'+title+'</h3>'+
+    '<table class="dctf-table"><thead><tr><th class="l">Débito apurado</th><th>Valor</th><th>Ded. (SM)</th><th class="saldo">Saldo</th></tr></thead><tbody>'+
+    inssRow('1082-01 CP Segurados', d.segEmp, 0, d.segEmp)+
+    inssRow('1138-01 CP Patronal', d.patronal, d.sm, d.patronalLiq)+
+    inssRow('1646-01 GILRAT ('+inssParams.gilrat+'%)', d.gilrat, 0, d.gilrat)+
+    ((d.segCI||d.patCI)?'<tr class="ci"><td class="l">Contribuinte individual</td><td>'+fmtBR(d.segCI+d.patCI)+'</td><td>-</td><td>'+fmtBR(d.segCI+d.patCI)+'</td></tr>':'')+
+    '<tr class="tot"><td class="l">Total</td><td>'+fmtBR(d.totalDeb)+'</td><td>'+fmtBR(d.sm)+'</td><td>'+fmtBR(d.saldo)+'</td></tr>'+
+    '</tbody></table><div class="dsh-none">Base empreg.: '+fmtBR(d.baseEmp)+' &middot; Base CI: '+fmtBR(d.baseCI)+'</div></div>';
+}
+function inssDiffCard(d,df){
+  function drow(lbl,a,b,tot){ var dif=+(a-b).toFixed(2), hl=Math.abs(dif)>0.01; return '<tr class="'+(tot?'tot':(hl?'diffrow':''))+'"><td class="l">'+lbl+'</td><td>'+fmtBR(a)+'</td><td>'+fmtBR(b)+'</td><td'+(hl?' style="color:var(--warn);font-weight:700"':'')+'>'+fmtBR(dif)+'</td></tr>'; }
+  return '<div class="dsh-panel" style="margin-top:12px"><h3>Diferen&ccedil;as por c&oacute;digo &mdash; eSocial (S-5001) &minus; folha (ERGON)</h3>'+
+    '<table class="dctf-table"><thead><tr><th class="l">C&oacute;digo</th><th>eSocial</th><th>Folha</th><th class="saldo">Diferen&ccedil;a</th></tr></thead><tbody>'+
+    drow('1082-01 CP Segurados', d.segEmp, df.segEmp)+
+    drow('1138-01 CP Patronal', d.patronal, df.patronal)+
+    drow('1646-01 GILRAT', d.gilrat, df.gilrat)+
+    ((d.segCI||d.patCI||df.segCI||df.patCI)?drow('Contribuinte individual', d.segCI+d.patCI, df.segCI+df.patCI):'')+
+    drow('Total', d.totalDeb, df.totalDeb, true)+
+    '</tbody></table></div>';
+}
 function inssRender(){
   var has=inssFolha.size>0||inssEso.size>0;
   $('#inssPlaceholder').classList.toggle('hidden',has);
   $('#inssResults').classList.toggle('hidden',!has);
   if(!has) return;
-  var c=inssCompute(), d=c.dctf;
-  $('#inssDctf').innerHTML='<div class="dsh-panel"><h3>Valores apurados para a DCTFWeb (a partir do eSocial S-5001)</h3>'+
-    '<table class="dctf-table"><thead><tr><th class="l">Débito apurado</th><th>Valor</th><th>Dedução (Sal-Mat)</th><th class="saldo">Saldo a pagar</th></tr></thead><tbody>'+
-    inssRow('1082-01 CP Segurados — empregados/avulsos', d.segEmp, 0, d.segEmp)+
-    inssRow('1138-01 CP Patronal — empregados/avulsos', d.patronal, d.sm, d.patronalLiq)+
-    inssRow('1646-01 CP Patronal — GILRAT ajustado ('+inssParams.gilrat+'%)', d.gilrat, 0, d.gilrat)+
-    ((d.segCI||d.patCI)? '<tr class="ci"><td class="l">Contribuinte individual (segurado 1099 + patronal '+inssParams.patronal+'%)</td><td>'+fmtBR(d.segCI+d.patCI)+'</td><td>-</td><td>'+fmtBR(d.segCI+d.patCI)+'</td></tr>':'')+
-    '<tr class="tot"><td class="l">Total</td><td>'+fmtBR(d.totalDeb)+'</td><td>'+fmtBR(d.sm)+'</td><td>'+fmtBR(d.saldo)+'</td></tr>'+
-    '</tbody></table><div class="dsh-none">Base empregados: '+fmtBR(d.baseEmp)+' &middot; Base CI: '+fmtBR(d.baseCI)+' &middot; patronal '+inssParams.patronal+'% &middot; GILRAT '+inssParams.gilrat+'% &middot; SM '+fmtBR(d.sm)+'</div></div>';
+  var c=inssCompute(), d=c.dctf, df=c.dctfFolha;
+  $('#inssDctf').innerHTML=
+    '<div class="dctf-two">'+
+      inssDctfTable(d,'DCTFWeb &mdash; a partir do eSocial (S-5001)')+
+      inssDctfTable(df,'DCTFWeb &mdash; a partir da folha (ERGON)')+
+    '</div>'+
+    inssDiffCard(d,df);
   $('#inssCards').innerHTML=
     inssCard('etot','CPFs na folha',inssFolha.size,'RGPS')+
     inssCard('e1202','CPFs no eSocial',inssEso.size,'S-5001')+
@@ -2141,20 +2171,21 @@ function inssRenderList(c){
 }
 function inssExport(){
   if(!(inssFolha.size||inssEso.size)) return;
-  var c=inssCompute(), d=c.dctf, wb=XLSX.utils.book_new();
-  var res=[['Conferência INSS (RGPS) — folha × eSocial'],[],
-    ['DCTFWeb (apurado do eSocial S-5001)'],['Código / item','Débito','Dedução SM','Saldo'],
-    ['1082-01 CP Segurados (empreg/avulso)',d.segEmp,0,d.segEmp],
-    ['1138-01 CP Patronal (empreg/avulso)',d.patronal,d.sm,d.patronalLiq],
-    ['1646-01 GILRAT ajustado ('+inssParams.gilrat+'%)',d.gilrat,0,d.gilrat],
-    ['Contribuinte individual (1099 seg + patronal)',d.segCI+d.patCI,0,d.segCI+d.patCI],
-    ['TOTAL',d.totalDeb,d.sm,d.saldo],[],
-    ['Base empregados',d.baseEmp],['Base CI',d.baseCI],
+  var c=inssCompute(), d=c.dctf, df=c.dctfFolha, wb=XLSX.utils.book_new();
+  var res=[['Conferência INSS (RGPS) — DCTFWeb: eSocial × folha'],[],
+    ['Código / item','eSocial (S-5001)','Folha (ERGON)','Diferença'],
+    ['1082-01 CP Segurados',d.segEmp,df.segEmp,+(d.segEmp-df.segEmp).toFixed(2)],
+    ['1138-01 CP Patronal',d.patronal,df.patronal,+(d.patronal-df.patronal).toFixed(2)],
+    ['1646-01 GILRAT ('+inssParams.gilrat+'%)',d.gilrat,df.gilrat,+(d.gilrat-df.gilrat).toFixed(2)],
+    ['Contribuinte individual',d.segCI+d.patCI,df.segCI+df.patCI,+((d.segCI+d.patCI)-(df.segCI+df.patCI)).toFixed(2)],
+    ['TOTAL',d.totalDeb,df.totalDeb,+(d.totalDeb-df.totalDeb).toFixed(2)],[],
+    ['Base empregados',d.baseEmp,df.baseEmp],['Base CI',d.baseCI,df.baseCI],
+    ['Parâmetros','patronal '+inssParams.patronal+'%','GILRAT '+inssParams.gilrat+'%','SM '+fmtBR(inssParams.sm)],[],
     ['CPFs folha',inssFolha.size],['CPFs eSocial',inssEso.size],
     ['Falta no eSocial',c.faltaEso.length],['Falta na folha',c.faltaFolha.length],
     ['Divergência base',c.divBase.length],['Divergência INSS',c.divInss.length],
     ['Gerado em',new Date().toLocaleString('pt-BR')]];
-  var wsR=XLSX.utils.aoa_to_sheet(res); wsR['!cols']=[{wch:38},{wch:14},{wch:12},{wch:14}]; XLSX.utils.book_append_sheet(wb,wsR,'DCTFWeb + Resumo');
+  var wsR=XLSX.utils.aoa_to_sheet(res); wsR['!cols']=[{wch:32},{wch:16},{wch:16},{wch:14}]; XLSX.utils.book_append_sheet(wb,wsR,'DCTFWeb + Resumo');
   function add(name,arr,cols){ var ws=XLSX.utils.aoa_to_sheet([cols].concat(arr)); ws['!cols']=cols.map(function(){return {wch:16};}); if(arr.length)ws['!autofilter']={ref:'A1:'+String.fromCharCode(64+cols.length)+(arr.length+1)}; XLSX.utils.book_append_sheet(wb,ws,name); }
   add('Falta no eSocial',c.faltaEso.map(function(x){return [x.cpf,x.nome,x.base,x.inss];}),['CPF','Nome','Base','INSS']);
   add('Falta na folha',c.faltaFolha.map(function(x){return [x.cpf,x.cat,x.base,x.inss];}),['CPF','Categoria','Base','INSS']);
