@@ -173,6 +173,15 @@
   .ev-edit.on{border-color:#F59E0B;background:#FFFBEB}
   .tag.manual{background:#FEF3C7;color:#92400E}
   .person.manedit{box-shadow:inset 3px 0 0 #F59E0B}
+  .tag.st-res{background:var(--just-bg);color:var(--just)}
+  .tag.st-ace{background:#EDE9FE;color:#6D28D9}
+  .st-edit{font:inherit;font-size:11px;padding:2px 6px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);cursor:pointer}
+  .st-edit.on{border-color:var(--just);background:var(--just-bg)}
+  .obs-edit{display:block;margin-top:7px;width:100%;max-width:440px;font:inherit;font-size:12px;padding:6px 9px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--ink)}
+  .obs-edit::placeholder{color:var(--muted)}
+  .obs-edit:focus{outline:2px solid var(--s1202);outline-offset:-1px;border-color:transparent}
+  .person.resolved{opacity:.62}
+  html[data-theme="dark"] .tag.st-ace{background:rgba(139,92,246,.20);color:#c7b6fb}
   /* ===== menu inicial (launcher) ===== */
   #gateMenu{display:none;position:relative;z-index:2;width:min(1040px,92vw);max-height:94vh;overflow:auto;text-align:center;padding:8px}
   .launch-logo{filter:drop-shadow(0 0 12px rgba(59,157,255,.45));margin-bottom:4px}
@@ -1183,6 +1192,8 @@ function splitFields(divStr){
 let processed = [];     // array of person objects
 let competencia = '';
 let manualOverrides = new Map();   // key 'cpf|mat|ano|mes' -> evento definido à mão
+let manualStatus = new Map();      // key -> 'resolvida' | 'acerto' (situação manual)
+let manualObs = new Map();         // key -> observação digitada
 let lastDivRows = null;             // linhas cruas da última planilha de divergências (para retomar sessão)
 let lastHonorRecords = null;        // registros crus da folha de honorários (para reprocessar ao mudar rubricas)
 const SESSION_KEY = 'esocial_session_v1';
@@ -1250,6 +1261,7 @@ function processDivergences(rows){
       nome: (rec&&rec.NOME) || (any&&any.NOME) || '(nome não informado)',
       cargo: rec&&rec.CARGO || '', lotacao: rec&&rec.LOTACAO || '',
       autoEvento:cls.evento, evento: ovr||cls.evento, manual: !!ovr,
+      status: manualStatus.get(pkey)||'', obs: manualObs.get(pkey)||'',
       regime:cls.regime, situacao:cls.situacao, plano:cls.plano, found:cls.found,
       matchBy, baseCpf, cpfMismatch, tempNote:cls.tempNote||'',
       unpaired: !(erg&&eso),
@@ -1348,6 +1360,18 @@ function setManualEvento(key, ev){
   render();
   saveSession();
 }
+function setManualStatus(key, val){
+  const p = processed.find(x=>x.key===key);
+  if(val){ manualStatus.set(key,val); } else { manualStatus.delete(key); }
+  if(p) p.status=val||'';
+  render(); saveSession();
+}
+function setManualObs(key, val){
+  const p = processed.find(x=>x.key===key);
+  if(val && val.trim()){ manualObs.set(key,val); } else { manualObs.delete(key); }
+  if(p) p.obs=val||'';
+  saveSession();  // sem render() para não perder o foco enquanto digita
+}
 
 let filterEvent = new Set(DISPLAY_ORDER);
 let searchTerm = '';
@@ -1421,14 +1445,17 @@ function personHTML(p){
   }
   const evOpts = EV_ORDER.map(e=>`<option value="${e}" ${e===p.evento?'selected':''}>${e}</option>`).join('');
   const evSelect = `<select class="ev-edit${p.manual?' on':''}" data-key="${p.key}" title="Reclassificar evento manualmente"><option value="__auto">↺ auto (${p.autoEvento})</option>${evOpts}</select>`;
+  const stTag = p.status==='resolvida' ? '<span class="tag st-res">✓ Resolvida</span>' : (p.status==='acerto' ? '<span class="tag st-ace">✎ Acerto manual</span>' : '');
+  const stSelect = `<select class="st-edit${p.status?' on':''}" data-key="${p.key}" title="Marcar situação"><option value="">situação…</option><option value="resolvida"${p.status==='resolvida'?' selected':''}>Resolvida</option><option value="acerto"${p.status==='acerto'?' selected':''}>Acerto manual</option></select>`;
   const tags = `<span class="badge ${ev.badge}">${p.evento}</span>
      <span class="tag reg">${p.regime}</span>
      <span class="tag">${p.situacao}</span>
      ${p.manual?'<span class="tag manual">✏️ manual</span>':''}
+     ${stTag}
      ${honTag}
      ${p.cpfMismatch?'<span class="tag" style="background:var(--warn-bg);color:var(--warn)">CPF difere da base</span>':''}
      ${p.unpaired?'<span class="tag" style="color:var(--warn)">par incompleto</span>':''}
-     ${evSelect}`;
+     ${evSelect}${stSelect}`;
   let note = !p.found ? `<div class="nomatch-note">⚠ CPF/matrícula não localizado na base de servidores — defina o evento manualmente.</div>` : '';
   if(p.cpfMismatch) note += `<div class="nomatch-note">⚠ CPF na divergência (${p.cpf}) ≠ CPF na base (${p.baseCpf}) para a matrícula ${p.mat}. Casado pela matrícula; confirme qual CPF está correto.</div>`;
   const tnote = p.tempNote ? `<div class="info-note">⏱ ${p.tempNote}</div>` : '';
@@ -1436,12 +1463,13 @@ function personHTML(p){
      ? p.diffs.map(d=>diffHTML(d,p.honor)).join('')
      : `<div style="font-size:12px;color:var(--muted)">Sem campos de valor divergentes detectados.</div>`;
   const just = (p.honor && p.honor.found && p.honor.status==='justificada') ? ' justified' : '';
-  return `<div class="person ${(p.found && !p.cpfMismatch)?'':'warn'}${just}${p.manual?' manedit':''}">
+  return `<div class="person ${(p.found && !p.cpfMismatch)?'':'warn'}${just}${p.manual?' manedit':''}${p.status==='resolvida'?' resolved':''}">
     <div class="pmeta">
       <div class="nome">${p.nome}</div>
       <div class="ids">${ids}</div>
       <div class="tags">${tags}</div>
       ${p.cargo?`<div class="cargo">${p.cargo}</div>`:''}
+      <input class="obs-edit" data-key="${p.key}" value="${(p.obs||'').replace(/"/g,'&quot;')}" placeholder="Observação (digite)…" title="Observação manual">
       ${tnote}
       ${note}
     </div>
@@ -1494,7 +1522,7 @@ function exportXLSX(){
 
   // Sheet 2: por servidor
   const honCols = honorLoaded ? ['Honor 774','Honor 8999','Resíduo VLRRENDTRIB','Resíduo VLRCRMEN','Situação honorários'] : [];
-  const serv=[['Evento','Grupo','CPF','Nome','Matrícula','Regime','Situação','Plano prev.','Cargo','Lotação','Competência','Qtd campos','Campos divergentes','Casado por','Observação',...honCols]];
+  const serv=[['Evento','Grupo','CPF','Nome','Matrícula','Regime','Situação','Plano prev.','Cargo','Lotação','Competência','Qtd campos','Campos divergentes','Casado por','Observação','Situação (manual)','Obs (manual)',...honCols]];
   for(const p of processed){
     const comp = p.ano? (p.ano+'/'+String(p.mes).padStart(2,'0')) : '';
     let obs='';
@@ -1504,7 +1532,8 @@ function exportXLSX(){
     if(p.tempNote) obs=(obs?obs+'; ':'')+p.tempNote;
     if(p.manual) obs=(obs?obs+'; ':'')+'Reclassificado manualmente (auto: '+p.autoEvento+')';
     const grupo = displayBucket(p)==='JUSTIFICADA' ? 'Sanada (honorários)' : displayBucket(p);
-    const row=[p.evento,grupo,p.cpf,p.nome,p.mat,p.regime,p.situacao,p.plano,p.cargo,p.lotacao,comp,p.diffs.length,p.diffs.map(d=>d.field).join(', '),p.matchBy||'—',obs];
+    const stLbl = p.status==='resolvida'?'Resolvida':(p.status==='acerto'?'Acerto manual':'');
+    const row=[p.evento,grupo,p.cpf,p.nome,p.mat,p.regime,p.situacao,p.plano,p.cargo,p.lotacao,comp,p.diffs.length,p.diffs.map(d=>d.field).join(', '),p.matchBy||'—',obs,stLbl,p.obs||''];
     if(honorLoaded){
       const h=p.honor;
       const stMap={justificada:'Justificada',parcial:'Parcial',naoexplica:'Honorários não explica',sem:''};
@@ -1514,7 +1543,7 @@ function exportXLSX(){
     serv.push(row);
   }
   const wsServ=XLSX.utils.aoa_to_sheet(serv);
-  const baseCols=[{wch:9},{wch:18},{wch:13},{wch:32},{wch:13},{wch:10},{wch:24},{wch:16},{wch:28},{wch:30},{wch:11},{wch:10},{wch:34},{wch:11},{wch:34}];
+  const baseCols=[{wch:9},{wch:18},{wch:13},{wch:32},{wch:13},{wch:10},{wch:24},{wch:16},{wch:28},{wch:30},{wch:11},{wch:10},{wch:34},{wch:11},{wch:34},{wch:16},{wch:36}];
   wsServ['!cols']= honorLoaded ? [...baseCols,{wch:12},{wch:12},{wch:18},{wch:18},{wch:20}] : baseCols;
   const lastCol=String.fromCharCode(65+serv[0].length-1);
   wsServ['!autofilter']={ref:`A1:${lastCol}${serv.length}`};
@@ -1608,12 +1637,15 @@ $('#btnExport').addEventListener('click',exportXLSX);
 
 // reclassificação manual via <select> nos cards (delegado — #groups persiste entre renders)
 $('#groups').addEventListener('change',e=>{
-  const s=e.target.closest('.ev-edit'); if(!s) return;
-  setManualEvento(s.dataset.key, s.value);
+  const s=e.target.closest('.ev-edit'); if(s){ setManualEvento(s.dataset.key, s.value); return; }
+  const st=e.target.closest('.st-edit'); if(st){ setManualStatus(st.dataset.key, st.value); }
+});
+$('#groups').addEventListener('input',e=>{
+  const o=e.target.closest('.obs-edit'); if(o) setManualObs(o.dataset.key, o.value);
 });
 
 function clearDivergences(){
-  processed=[]; competencia=''; searchTerm=''; manualOverrides.clear();
+  processed=[]; competencia=''; searchTerm=''; manualOverrides.clear(); manualStatus.clear(); manualObs.clear();
   filterEvent = new Set(DISPLAY_ORDER);
   $('#search').value='';
   document.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed','true'));
@@ -1683,6 +1715,8 @@ function saveSession(){
       v:1, savedAt:new Date().toISOString(), competencia,
       divRows: lastDivRows||[],
       overrides: [...manualOverrides],
+      status: [...manualStatus],
+      obs: [...manualObs],
       honor: { loaded:honorLoaded, map: honorLoaded ? [...honorMap].map(([k,v])=>[k,{h774:v.h774,h8999:v.h8999,h4015:v.h4015}]) : [] }
     };
     localStorage.setItem(SESSION_KEY, JSON.stringify(s));
@@ -1695,6 +1729,8 @@ function restoreSession(){
   let s; try{ s=JSON.parse(localStorage.getItem(SESSION_KEY)); }catch(e){ return; }
   if(!s || !s.divRows || !s.divRows.length) return;
   manualOverrides = new Map(s.overrides||[]);
+  manualStatus = new Map(s.status||[]);
+  manualObs = new Map(s.obs||[]);
   if(s.honor && s.honor.loaded && (s.honor.map||[]).length){
     honorMap = new Map((s.honor.map||[]).map(([k,v])=>[k,{h774:v.h774||0,h8999:v.h8999||0,h4015:v.h4015||0,raw:{}}]));
     honorLoaded = true;
