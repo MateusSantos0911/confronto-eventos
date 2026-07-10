@@ -34,12 +34,12 @@
   .basebox button:hover{border-color:var(--ink);color:var(--ink)}
 
   /* dropzone */
-  .drop{background:var(--surface);border:2px dashed var(--line);border-radius:14px;padding:34px 24px;text-align:center;cursor:pointer;transition:.15s}
-  .drop:hover,.drop.over{border-color:var(--s1202);background:#FAFBFE}
-  .drop .big{font-size:17px;font-weight:600}
-  .drop .sub{color:var(--muted);margin-top:5px;font-size:13px}
-  .drop .ic{font-size:30px;line-height:1}
-  .drop.compact{padding:16px;text-align:left;display:flex;align-items:center;gap:14px}
+  .drop{background:var(--surface);border:1.5px dashed var(--line);border-radius:16px;padding:26px 24px;text-align:center;cursor:pointer;transition:transform .18s,border-color .18s,box-shadow .18s}
+  .drop:hover,.drop.over{border-color:var(--s1202);transform:translateY(-1px);box-shadow:0 10px 30px rgba(47,107,255,.10)}
+  .drop .big{font-size:14.5px;font-weight:650;color:var(--ink)}
+  .drop .sub{color:var(--muted);margin-top:3px;font-size:12px}
+  .drop:not(.compact) .ic{width:48px;height:48px;margin:0 auto 10px;border-radius:14px;display:flex;align-items:center;justify-content:center;color:#2f6bff;background:linear-gradient(150deg,rgba(59,157,255,.16),rgba(47,107,255,.10));border:1px solid rgba(59,157,255,.30)}
+  .drop.compact{padding:15px 18px;text-align:left;display:flex;align-items:center;gap:14px}
   .drop.compact .ic{font-size:15px;font-weight:800;color:#fff;width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex:none;background:linear-gradient(150deg,#4b8bff,#1e51d6);box-shadow:0 3px 0 #163f9e,0 6px 12px rgba(30,81,214,.45),inset 0 1px 0 rgba(255,255,255,.4)}
 
   /* retomar sessão */
@@ -273,6 +273,8 @@
   html[data-theme="dark"] .brand .eyebrow{color:#6ea8ff}
   .card{transition:transform .14s,box-shadow .14s}
   .card:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(20,50,120,.13)}
+  #cards .card{cursor:pointer;user-select:none}
+  #cards .card.sel{outline:2px solid var(--s1202);outline-offset:1px;box-shadow:0 6px 18px rgba(47,107,255,.20)}
   html[data-theme="dark"] .card:hover{box-shadow:0 10px 26px rgba(0,0,0,.5),0 0 22px rgba(47,107,255,.14)}
   footer{position:relative;z-index:1}
 
@@ -806,9 +808,9 @@
   </div>
 
   <div class="drop" id="drop">
-    <div class="ic">⇪</div>
-    <div class="big">Arraste aqui a planilha de divergências</div>
-    <div class="sub">ou clique para selecionar — formato CSV (ERGON × eSocial), igual ao LISTA_ERGONESO_DIVERG</div>
+    <div class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M8 8l4-4 4 4M5 20h14"/></svg></div>
+    <div class="big">Planilha de divergências</div>
+    <div class="sub">arraste ou clique &middot; CSV (ERGON &times; eSocial)</div>
     <input type="file" id="fileDiv" accept=".csv" class="hidden">
   </div>
 
@@ -889,7 +891,7 @@
       <div class="ic">1</div>
       <div>
         <div class="big" style="font-size:14px">Folha (eventos esperados)</div>
-        <div class="sub" id="dshFolhaStatus">Arraste a planilha da folha (.xlsx) &mdash; colunas NUMFUNC, CPF, NOME, CATEGORIA, SITUACAO, COMPETENCIA</div>
+        <div class="sub" id="dshFolhaStatus">Folha do ERGON (.xlsx) &middot; arraste ou clique</div>
       </div>
       <input type="file" id="dshFileFolha" accept=".xlsx,.csv" class="hidden">
     </div>
@@ -897,7 +899,7 @@
       <div class="ic">2</div>
       <div>
         <div class="big" style="font-size:14px">Eventos enviados</div>
-        <div class="sub" id="dshJsonStatus">Arraste 1 ou mais arquivos .json exportados da ferramenta de envio (S-1200 / S-1202 / S-1207)</div>
+        <div class="sub" id="dshJsonStatus">JSONs enviados &middot; S-1200 / 1202 / 1207 &middot; arraste ou clique</div>
       </div>
       <input type="file" id="dshFileJson" accept=".json" multiple class="hidden">
     </div>
@@ -970,12 +972,12 @@
   <div class="dsh-steps">
     <div class="drop compact" id="inssDropFolha">
       <div class="ic">1</div>
-      <div><div class="big" style="font-size:14px">Folha RGPS</div><div class="sub" id="inssFolhaStatus">Arraste a folha (.csv) &mdash; CPF, VLBASE, VLINSS, NOME, CATEGORIA</div></div>
+      <div><div class="big" style="font-size:14px">Folha RGPS</div><div class="sub" id="inssFolhaStatus">Folha RGPS (.csv) &middot; arraste ou clique</div></div>
       <input type="file" id="inssFileFolha" accept=".csv" class="hidden">
     </div>
     <div class="drop compact" id="inssDropEso">
       <div class="ic">2</div>
-      <div><div class="big" style="font-size:14px">eSocial S-5001</div><div class="sub" id="inssEsoStatus">Arraste o S-5001 (.csv) &mdash; apura&ccedil;&atilde;o por trabalhador</div></div>
+      <div><div class="big" style="font-size:14px">eSocial S-5001</div><div class="sub" id="inssEsoStatus">S-5001 (.csv) &middot; arraste ou clique</div></div>
       <input type="file" id="inssFileEso" accept=".csv" class="hidden">
     </div>
   </div>
@@ -1390,14 +1392,17 @@ function renderCards(){
   const aindaErro = c['S-1200']+c['S-1202']+c['S-1207']+c['REVISAR'];
   const totMeta = honorLoaded ? `${aindaErro} ainda com erro · competência ${competencia||'—'}` : `competência ${competencia||'—'}`;
   const evMeta = honorLoaded ? 'continuam com erro' : '';
+  const allSel = DISPLAY_ORDER.every(x=>filterEvent.has(x));
+  const only = filterEvent.size===1 ? [...filterEvent][0] : null;
+  const sel = f => ((f==='all'? allSel : only===f) ? ' sel' : '');
   $('#cards').innerHTML = `
-    <div class="card etot"><div class="lab">Servidores em divergência</div><div class="num">${c.total}</div><div class="meta">${totMeta}</div></div>
-    <div class="card e1200"><div class="lab">S-1200 · RGPS</div><div class="num">${c['S-1200']}</div><div class="meta">${evMeta||'remuneração regime geral'}</div></div>
-    <div class="card e1202"><div class="lab">S-1202 · RPPS ativo</div><div class="num">${c['S-1202']}</div><div class="meta">${evMeta||'servidores ativos'}</div></div>
-    <div class="card e1207"><div class="lab">S-1207 · Benefícios</div><div class="num">${c['S-1207']}</div><div class="meta">${evMeta||'aposentados / pensionistas'}</div></div>
-    <div class="card ewarn"><div class="lab">Revisar</div><div class="num">${c['REVISAR']}</div><div class="meta">${c.notfound} não localizado(s) · ${c.cpfdif} CPF difere</div></div>
-    <div class="card eign"><div class="lab">Ignorados</div><div class="num">${c['IGNORAR']}</div><div class="meta">vínculos de benefício</div></div>
-    ${honorLoaded?`<div class="card ejust"><div class="lab">Sanadas (honorários)</div><div class="num">${c['JUSTIFICADA']}</div><div class="meta">fora das abas de erro · ${c.partial} parcial(is) seguem nas abas</div></div>`:''}`;
+    <div class="card etot${sel('all')}" data-f="all" title="Clique para ver todos"><div class="lab">Servidores em divergência</div><div class="num">${c.total}</div><div class="meta">${totMeta}</div></div>
+    <div class="card e1200${sel('S-1200')}" data-f="S-1200" title="Clique para filtrar"><div class="lab">S-1200 · RGPS</div><div class="num">${c['S-1200']}</div><div class="meta">${evMeta||'remuneração regime geral'}</div></div>
+    <div class="card e1202${sel('S-1202')}" data-f="S-1202" title="Clique para filtrar"><div class="lab">S-1202 · RPPS ativo</div><div class="num">${c['S-1202']}</div><div class="meta">${evMeta||'servidores ativos'}</div></div>
+    <div class="card e1207${sel('S-1207')}" data-f="S-1207" title="Clique para filtrar"><div class="lab">S-1207 · Benefícios</div><div class="num">${c['S-1207']}</div><div class="meta">${evMeta||'aposentados / pensionistas'}</div></div>
+    <div class="card ewarn${sel('REVISAR')}" data-f="REVISAR" title="Clique para filtrar"><div class="lab">Revisar</div><div class="num">${c['REVISAR']}</div><div class="meta">${c.notfound} não localizado(s) · ${c.cpfdif} CPF difere</div></div>
+    <div class="card eign${sel('IGNORAR')}" data-f="IGNORAR" title="Clique para filtrar"><div class="lab">Ignorados</div><div class="num">${c['IGNORAR']}</div><div class="meta">vínculos de benefício</div></div>
+    ${honorLoaded?`<div class="card ejust${sel('JUSTIFICADA')}" data-f="JUSTIFICADA" title="Clique para filtrar"><div class="lab">Sanadas (honorários)</div><div class="num">${c['JUSTIFICADA']}</div><div class="meta">fora das abas de erro · ${c.partial} parcial(is) seguem nas abas</div></div>`:''}`;
 }
 function personMatches(p){
   if(!filterEvent.has(displayBucket(p))) return false;
@@ -1633,6 +1638,15 @@ $('#chips').addEventListener('click',e=>{
   }
   render();
 });
+// KPIs clicáveis: clicar num card filtra a lista para aquele evento (clicar de novo mostra todos)
+function setFilterCard(f){
+  if(f==='all' || (filterEvent.size===1 && filterEvent.has(f))) filterEvent = new Set(DISPLAY_ORDER);
+  else filterEvent = new Set([f]);
+  const allOn = DISPLAY_ORDER.every(x=>filterEvent.has(x));
+  document.querySelectorAll('#chips .chip').forEach(c=>{ c.setAttribute('aria-pressed', c.dataset.f==='all'? allOn : filterEvent.has(c.dataset.f)); });
+  render();
+}
+$('#cards').addEventListener('click',e=>{ const card=e.target.closest('.card'); if(card&&card.dataset.f) setFilterCard(card.dataset.f); });
 $('#btnExport').addEventListener('click',exportXLSX);
 
 // reclassificação manual via <select> nos cards (delegado — #groups persiste entre renders)
@@ -1973,8 +1987,8 @@ function dshExport(){
 }
 function dshClear(){
   dshFolha=[]; dshSent=new Map(); dshTypeEvents={'S-1200':0,'S-1202':0,'S-1207':0,'?':0}; dshJsonFiles=[]; dshSearchT=''; dshTab='pend'; dshForcePend=new Set();
-  $('#dshFolhaStatus').innerHTML='Arraste a planilha da folha (.xlsx) &mdash; colunas NUMFUNC, CPF, NOME, CATEGORIA, SITUACAO, COMPETENCIA';
-  $('#dshJsonStatus').innerHTML='Arraste 1 ou mais arquivos .json exportados da ferramenta de envio (S-1200 / S-1202 / S-1207)';
+  $('#dshFolhaStatus').innerHTML='Folha do ERGON (.xlsx) &middot; arraste ou clique';
+  $('#dshJsonStatus').innerHTML='JSONs enviados &middot; S-1200 / 1202 / 1207 &middot; arraste ou clique';
   var sb=$('#dshSearch'); if(sb) sb.value='';
   document.querySelectorAll('#dshTabs .chip').forEach(function(x){x.setAttribute('aria-pressed', x.dataset.tab==='pend');});
   dshRender();
@@ -2173,14 +2187,14 @@ function inssDctfTable(d,title){
     '</tbody></table><div class="dsh-none">Base empreg.: '+fmtBR(d.baseEmp)+' &middot; Base CI: '+fmtBR(d.baseCI)+'</div></div>';
 }
 function inssDiffCard(d,df){
-  function drow(lbl,a,b,tot){ var dif=+(a-b).toFixed(2), hl=Math.abs(dif)>0.01; return '<tr class="'+(tot?'tot':(hl?'diffrow':''))+'"><td class="l">'+lbl+'</td><td>'+fmtBR(a)+'</td><td>'+fmtBR(b)+'</td><td'+(hl?' style="color:var(--warn);font-weight:700"':'')+'>'+fmtBR(dif)+'</td></tr>'; }
+  function drow(lbl,folha,eso,tot){ var dif=+(eso-folha).toFixed(2), hl=Math.abs(dif)>0.01; return '<tr class="'+(tot?'tot':(hl?'diffrow':''))+'"><td class="l">'+lbl+'</td><td>'+fmtBR(folha)+'</td><td>'+fmtBR(eso)+'</td><td'+(hl?' style="color:var(--warn);font-weight:700"':'')+'>'+fmtBR(dif)+'</td></tr>'; }
   return '<div class="dsh-panel" style="margin-top:12px"><h3>Diferen&ccedil;as por c&oacute;digo &mdash; eSocial (S-5001) &minus; folha (ERGON)</h3>'+
-    '<table class="dctf-table"><thead><tr><th class="l">C&oacute;digo</th><th>eSocial</th><th>Folha</th><th class="saldo">Diferen&ccedil;a</th></tr></thead><tbody>'+
-    drow('1082-01 CP Segurados', d.segEmp, df.segEmp)+
-    drow('1138-01 CP Patronal', d.patronal, df.patronal)+
-    drow('1646-01 GILRAT', d.gilrat, df.gilrat)+
-    ((d.segCI||d.patCI||df.segCI||df.patCI)?drow('Contribuinte individual', d.segCI+d.patCI, df.segCI+df.patCI):'')+
-    drow('Total', d.totalDeb, df.totalDeb, true)+
+    '<table class="dctf-table"><thead><tr><th class="l">C&oacute;digo</th><th>Folha</th><th>eSocial</th><th class="saldo">Diferen&ccedil;a</th></tr></thead><tbody>'+
+    drow('1082-01 CP Segurados', df.segEmp, d.segEmp)+
+    drow('1138-01 CP Patronal', df.patronal, d.patronal)+
+    drow('1646-01 GILRAT', df.gilrat, d.gilrat)+
+    ((d.segCI||d.patCI||df.segCI||df.patCI)?drow('Contribuinte individual', df.segCI+df.patCI, d.segCI+d.patCI):'')+
+    drow('Total', df.totalDeb, d.totalDeb, true)+
     '</tbody></table></div>';
 }
 function inssRender(){
@@ -2191,8 +2205,8 @@ function inssRender(){
   var c=inssCompute(), d=c.dctf, df=c.dctfFolha;
   $('#inssDctf').innerHTML=
     '<div class="dctf-two">'+
-      inssDctfTable(d,'DCTFWeb &mdash; a partir do eSocial (S-5001)')+
       inssDctfTable(df,'DCTFWeb &mdash; a partir da folha (ERGON)')+
+      inssDctfTable(d,'DCTFWeb &mdash; a partir do eSocial (S-5001)')+
     '</div>'+
     inssDiffCard(d,df);
   $('#inssCards').innerHTML=
@@ -2228,13 +2242,13 @@ function inssExport(){
   if(!(inssFolha.size||inssEso.size)) return;
   var c=inssCompute(), d=c.dctf, df=c.dctfFolha, wb=XLSX.utils.book_new();
   var res=[['Conferência INSS (RGPS) — DCTFWeb: eSocial × folha'],[],
-    ['Código / item','eSocial (S-5001)','Folha (ERGON)','Diferença'],
-    ['1082-01 CP Segurados',d.segEmp,df.segEmp,+(d.segEmp-df.segEmp).toFixed(2)],
-    ['1138-01 CP Patronal',d.patronal,df.patronal,+(d.patronal-df.patronal).toFixed(2)],
-    ['1646-01 GILRAT ('+inssParams.gilrat+'%)',d.gilrat,df.gilrat,+(d.gilrat-df.gilrat).toFixed(2)],
-    ['Contribuinte individual',d.segCI+d.patCI,df.segCI+df.patCI,+((d.segCI+d.patCI)-(df.segCI+df.patCI)).toFixed(2)],
-    ['TOTAL',d.totalDeb,df.totalDeb,+(d.totalDeb-df.totalDeb).toFixed(2)],[],
-    ['Base empregados',d.baseEmp,df.baseEmp],['Base CI',d.baseCI,df.baseCI],
+    ['Código / item','Folha (ERGON)','eSocial (S-5001)','Diferença (eSocial−folha)'],
+    ['1082-01 CP Segurados',df.segEmp,d.segEmp,+(d.segEmp-df.segEmp).toFixed(2)],
+    ['1138-01 CP Patronal',df.patronal,d.patronal,+(d.patronal-df.patronal).toFixed(2)],
+    ['1646-01 GILRAT ('+inssParams.gilrat+'%)',df.gilrat,d.gilrat,+(d.gilrat-df.gilrat).toFixed(2)],
+    ['Contribuinte individual',df.segCI+df.patCI,d.segCI+d.patCI,+((d.segCI+d.patCI)-(df.segCI+df.patCI)).toFixed(2)],
+    ['TOTAL',df.totalDeb,d.totalDeb,+(d.totalDeb-df.totalDeb).toFixed(2)],[],
+    ['Base empregados',df.baseEmp,d.baseEmp],['Base CI',df.baseCI,d.baseCI],
     ['Parâmetros','patronal '+inssParams.patronal+'%','GILRAT '+inssParams.gilrat+'%','SM '+fmtBR(inssParams.sm)],[],
     ['CPFs folha',inssFolha.size],['CPFs eSocial',inssEso.size],
     ['Falta no eSocial',c.faltaEso.length],['Falta na folha',c.faltaFolha.length],
@@ -2250,8 +2264,8 @@ function inssExport(){
 }
 function inssClear(){
   inssFolha=new Map(); inssEso=new Map(); inssSearchT='';
-  $('#inssFolhaStatus').innerHTML='Arraste a folha (.csv) &mdash; CPF, VLBASE, VLINSS, NOME, CATEGORIA';
-  $('#inssEsoStatus').innerHTML='Arraste o S-5001 (.csv) &mdash; apura&ccedil;&atilde;o por trabalhador';
+  $('#inssFolhaStatus').innerHTML='Folha RGPS (.csv) &middot; arraste ou clique';
+  $('#inssEsoStatus').innerHTML='S-5001 (.csv) &middot; arraste ou clique';
   var s=$('#inssSearch'); if(s) s.value='';
   inssRender();
 }
