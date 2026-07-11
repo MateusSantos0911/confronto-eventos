@@ -34,7 +34,7 @@
   .basebox button:hover{border-color:var(--ink);color:var(--ink)}
 
   /* dropzone */
-  .drop{background:var(--surface);border:1.5px dashed var(--line);border-radius:16px;padding:26px 24px;text-align:center;cursor:pointer;transition:transform .18s,border-color .18s,box-shadow .18s}
+  .drop{background:rgba(255,255,255,.42);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);border:1.5px dashed var(--line);border-radius:16px;padding:26px 24px;text-align:center;cursor:pointer;transition:transform .18s,border-color .18s,box-shadow .18s}
   .drop:hover,.drop.over{border-color:var(--s1202);transform:translateY(-1px);box-shadow:0 10px 30px rgba(47,107,255,.10)}
   .drop .big{font-size:14.5px;font-weight:650;color:var(--ink)}
   .drop .sub{color:var(--muted);margin-top:3px;font-size:12px}
@@ -49,6 +49,10 @@
   .import-row #honorbar.loaded{background:rgba(21,128,61,.12)}
   html[data-theme="dark"] .import-row .drop,html[data-theme="dark"] .import-row #honorbar{background:rgba(13,24,44,.40)}
   html[data-theme="dark"] .import-row #honorbar.loaded{background:rgba(74,222,128,.12)}
+  #honorbar{position:relative}
+  #honorbar .hb-opt{font-weight:500;color:var(--muted);font-size:12px}
+  .honor-clear{position:absolute;top:8px;right:11px;font:inherit;font-size:11px;color:var(--muted);background:none;border:0;cursor:pointer;text-decoration:underline;padding:2px}
+  .honor-clear:hover{color:var(--warn)}
   .drop.compact .ic{font-size:15px;font-weight:800;color:#fff;width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex:none;background:linear-gradient(150deg,#4b8bff,#1e51d6);box-shadow:0 3px 0 #163f9e,0 6px 12px rgba(30,81,214,.45),inset 0 1px 0 rgba(255,255,255,.4)}
 
   /* retomar sessão */
@@ -315,7 +319,7 @@
   }
   html[data-theme="dark"] body{background:radial-gradient(150% 140% at 50% -20%,#0c1832 0%,#060d1c 62%,#03060f 100%);background-attachment:fixed}
   html[data-theme="dark"] header.app{border-bottom-color:#33456a}
-  html[data-theme="dark"] .drop{background:#0d1830}
+  html[data-theme="dark"] .drop{background:rgba(13,24,44,.42)}
   html[data-theme="dark"] .drop:hover,html[data-theme="dark"] .drop.over{background:rgba(59,157,255,.09)}
   html[data-theme="dark"] .dsh-table th{background:#13223b;color:var(--muted)}
   html[data-theme="dark"] .dsh-table tr.yr td{background:#152740}
@@ -823,19 +827,12 @@
       <div class="sub">arraste ou clique &middot; CSV (ERGON &times; eSocial)</div>
       <input type="file" id="fileDiv" accept=".csv" class="hidden">
     </div>
-    <div class="honorbar" id="honorbar">
-      <div class="hb-left">
-        <span class="hb-ic">₂</span>
-        <div>
-          <div class="hb-title">Folha de honorários <span class="hb-opt">&mdash; opcional</span></div>
-          <div class="hb-sub" id="honorStatus">Justifica diverg&ecirc;ncias: <b>774</b> abate <code>VLRRENDTRIB</code> e <b>8999</b> <code>VLRCRMEN</code>.</div>
-        </div>
-      </div>
-      <div class="hb-actions">
-        <button id="btnHonor" class="hb-btn">Importar honor&aacute;rios</button>
-        <button id="btnHonorClear" class="hb-btn ghost hidden">Remover</button>
-        <input type="file" id="fileHonor" accept=".xlsx,.csv" class="hidden">
-      </div>
+    <div class="drop" id="honorbar">
+      <div class="ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M8 8l4-4 4 4M5 20h14"/></svg></div>
+      <div class="big">Folha de honor&aacute;rios <span class="hb-opt">&mdash; opcional</span></div>
+      <div class="sub" id="honorStatus">arraste ou clique &middot; .xlsx (justifica diverg&ecirc;ncias)</div>
+      <button id="btnHonorClear" class="honor-clear hidden" type="button">remover</button>
+      <input type="file" id="fileHonor" accept=".xlsx,.csv" class="hidden">
     </div>
   </div>
 
@@ -1708,14 +1705,16 @@ function handleHonorFile(file){
   };
   fr.readAsArrayBuffer(file);
 }
-$('#btnHonor').addEventListener('click',()=>$('#fileHonor').click());
+$('#honorbar').addEventListener('click',e=>{ if(e.target.closest('#btnHonorClear')) return; $('#fileHonor').click(); });
+['dragover','dragenter'].forEach(ev=>$('#honorbar').addEventListener(ev,e=>{e.preventDefault();$('#honorbar').classList.add('over');}));
+$('#honorbar').addEventListener('dragleave',e=>{e.preventDefault();$('#honorbar').classList.remove('over');});
+$('#honorbar').addEventListener('drop',e=>{e.preventDefault();$('#honorbar').classList.remove('over'); const f=e.dataTransfer.files[0]; if(f) handleHonorFile(f);});
 $('#fileHonor').addEventListener('change',e=>{ if(e.target.files[0]) handleHonorFile(e.target.files[0]); e.target.value=''; });
 $('#btnHonorClear').addEventListener('click',()=>{
   honorMap=new Map(); honorLoaded=false; hideJustified=false; lastHonorRecords=null;
   for(const p of processed) p.honor=null;
   $('#honorStatus').innerHTML='Justifica divergências: <b>774</b> abate <code>VLRRENDTRIB</code> e <b>8999</b> <code>VLRCRMEN</code>.';
   $('#honorbar').classList.remove('loaded');
-  $('#btnHonor').textContent='Importar honorários';
   $('#btnHonorClear').classList.add('hidden');
   $('#chipJust').classList.add('hidden');
   filterEvent.add('JUSTIFICADA');
@@ -1727,7 +1726,6 @@ $('#btnHonorClear').addEventListener('click',()=>{
 function setHonorLoadedUI(n){
   $('#honorStatus').innerHTML=`Folha carregada: <b>${n}</b> matrícula(s)/competência(s). Rubricas 774 e 8999 aplicadas; 4015 ignorada.`;
   $('#honorbar').classList.add('loaded');
-  $('#btnHonor').textContent='Trocar arquivo';
   $('#btnHonorClear').classList.remove('hidden');
   $('#chipJust').classList.remove('hidden');
   filterEvent.add('JUSTIFICADA');
