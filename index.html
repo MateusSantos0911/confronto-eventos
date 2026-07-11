@@ -40,6 +40,15 @@
   .drop .sub{color:var(--muted);margin-top:3px;font-size:12px}
   .drop:not(.compact) .ic{width:48px;height:48px;margin:0 auto 10px;border-radius:14px;display:flex;align-items:center;justify-content:center;color:#2f6bff;background:linear-gradient(150deg,rgba(59,157,255,.16),rgba(47,107,255,.10));border:1px solid rgba(59,157,255,.30)}
   .drop.compact{padding:15px 18px;text-align:left;display:flex;align-items:center;gap:14px}
+  /* importação (divergências + honorários) lado a lado, translúcido */
+  .import-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:stretch;margin-top:2px}
+  @media(max-width:720px){ .import-row{grid-template-columns:1fr} }
+  .import-row .drop{padding:16px 20px;background:rgba(255,255,255,.40);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px)}
+  .import-row .drop:not(.compact) .ic{width:40px;height:40px;margin:0 auto 8px}
+  .import-row #honorbar{margin:0;background:rgba(255,255,255,.40);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px)}
+  .import-row #honorbar.loaded{background:rgba(21,128,61,.12)}
+  html[data-theme="dark"] .import-row .drop,html[data-theme="dark"] .import-row #honorbar{background:rgba(13,24,44,.40)}
+  html[data-theme="dark"] .import-row #honorbar.loaded{background:rgba(74,222,128,.12)}
   .drop.compact .ic{font-size:15px;font-weight:800;color:#fff;width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex:none;background:linear-gradient(150deg,#4b8bff,#1e51d6);box-shadow:0 3px 0 #163f9e,0 6px 12px rgba(30,81,214,.45),inset 0 1px 0 rgba(255,255,255,.4)}
 
   /* retomar sessão */
@@ -807,11 +816,27 @@
     </div>
   </div>
 
-  <div class="drop" id="drop">
-    <div class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M8 8l4-4 4 4M5 20h14"/></svg></div>
-    <div class="big">Planilha de divergências</div>
-    <div class="sub">arraste ou clique &middot; CSV (ERGON &times; eSocial)</div>
-    <input type="file" id="fileDiv" accept=".csv" class="hidden">
+  <div class="import-row">
+    <div class="drop" id="drop">
+      <div class="ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M8 8l4-4 4 4M5 20h14"/></svg></div>
+      <div class="big">Planilha de divergências</div>
+      <div class="sub">arraste ou clique &middot; CSV (ERGON &times; eSocial)</div>
+      <input type="file" id="fileDiv" accept=".csv" class="hidden">
+    </div>
+    <div class="honorbar" id="honorbar">
+      <div class="hb-left">
+        <span class="hb-ic">₂</span>
+        <div>
+          <div class="hb-title">Folha de honorários <span class="hb-opt">&mdash; opcional</span></div>
+          <div class="hb-sub" id="honorStatus">Justifica diverg&ecirc;ncias: <b>774</b> abate <code>VLRRENDTRIB</code> e <b>8999</b> <code>VLRCRMEN</code>.</div>
+        </div>
+      </div>
+      <div class="hb-actions">
+        <button id="btnHonor" class="hb-btn">Importar honor&aacute;rios</button>
+        <button id="btnHonorClear" class="hb-btn ghost hidden">Remover</button>
+        <input type="file" id="fileHonor" accept=".xlsx,.csv" class="hidden">
+      </div>
+    </div>
   </div>
 
   <div class="resumebar hidden" id="resumeBar">
@@ -829,21 +854,6 @@
   </div>
 
   <div id="results" class="hidden">
-    <div class="honorbar" id="honorbar">
-      <div class="hb-left">
-        <span class="hb-ic">₂</span>
-        <div>
-          <div class="hb-title">Folha de honorários <span class="hb-opt">— passo 2, opcional</span></div>
-          <div class="hb-sub" id="honorStatus">Importe o arquivo (.xlsx) para justificar divergências: rubrica <b>774</b> abate de <code>VLRRENDTRIB</code> e <b>8999</b> de <code>VLRCRMEN</code>. A rubrica 4015 (pensão) é ignorada.</div>
-        </div>
-      </div>
-      <div class="hb-actions">
-        <button id="btnHonor" class="hb-btn">Importar honorários</button>
-        <button id="btnHonorClear" class="hb-btn ghost hidden">Remover</button>
-        <input type="file" id="fileHonor" accept=".xlsx,.csv" class="hidden">
-      </div>
-    </div>
-
     <div class="cards" id="cards"></div>
 
     <div class="controls">
@@ -1703,7 +1713,7 @@ $('#fileHonor').addEventListener('change',e=>{ if(e.target.files[0]) handleHonor
 $('#btnHonorClear').addEventListener('click',()=>{
   honorMap=new Map(); honorLoaded=false; hideJustified=false; lastHonorRecords=null;
   for(const p of processed) p.honor=null;
-  $('#honorStatus').innerHTML='Importe o arquivo (.xlsx) para justificar divergências: rubrica <b>774</b> abate de <code>VLRRENDTRIB</code> e <b>8999</b> de <code>VLRCRMEN</code>. A rubrica 4015 (pensão) é ignorada.';
+  $('#honorStatus').innerHTML='Justifica divergências: <b>774</b> abate <code>VLRRENDTRIB</code> e <b>8999</b> <code>VLRCRMEN</code>.';
   $('#honorbar').classList.remove('loaded');
   $('#btnHonor').textContent='Importar honorários';
   $('#btnHonorClear').classList.add('hidden');
