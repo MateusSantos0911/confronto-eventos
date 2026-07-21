@@ -190,7 +190,8 @@
   .tag.st-ace{background:#EDE9FE;color:#6D28D9}
   .st-edit{font:inherit;font-size:11px;padding:2px 6px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);cursor:pointer}
   .st-edit.on{border-color:var(--just);background:var(--just-bg)}
-  .obs-edit{display:block;margin-top:7px;width:100%;max-width:440px;font:inherit;font-size:12px;padding:6px 9px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--ink)}
+  .tag.st-pend{background:var(--warn-bg);color:var(--warn)}
+  .obs-edit{display:block;margin-top:7px;width:100%;max-width:560px;font:inherit;font-size:12px;line-height:1.5;padding:7px 10px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--ink);resize:vertical;overflow:hidden;min-height:34px;white-space:pre-wrap;overflow-wrap:break-word;box-sizing:border-box}
   .obs-edit::placeholder{color:var(--muted)}
   .obs-edit:focus{outline:2px solid var(--s1202);outline-offset:-1px;border-color:transparent}
   .person.resolved{opacity:.62}
@@ -862,7 +863,7 @@
         <button class="chip c1207" data-f="S-1207" aria-pressed="true">S-1207</button>
         <button class="chip cwarn" data-f="REVISAR" aria-pressed="true">Revisar</button>
         <button class="chip cign" data-f="IGNORAR" aria-pressed="true">Ignorados</button>
-        <button class="chip cjust hidden" id="chipJust" data-f="JUSTIFICADA" aria-pressed="true">Sanadas</button>
+        <button class="chip cjust" id="chipJust" data-f="JUSTIFICADA" aria-pressed="true">Sanadas</button>
       </div>
       <button class="btn-clear" id="btnClear">Limpar divergências</button>
       <button class="btn-export" id="btnExport">Exportar .xlsx</button>
@@ -1234,13 +1235,14 @@ const EVENTS = {
   'S-1207':{badge:'b1207',card:'e1207',chip:'c1207',desc:'Benefícios — RPPS (aposentado vivo na competência)'},
   'REVISAR':{badge:'bwarn',card:'ewarn',chip:'cwarn',desc:'Sem classificação automática — verificar manualmente'},
   'IGNORAR':{badge:'bign',card:'eign',chip:'cign',desc:'Vínculo de benefício — envio ao eSocial ainda indefinido; fora do confronto'},
-  'JUSTIFICADA':{badge:'bjust',card:'ejust',chip:'cjust',desc:'Divergência sanada pela folha de honorários — não enviar ao eSocial'},
+  'JUSTIFICADA':{badge:'bjust',card:'ejust',chip:'cjust',desc:'Divergência resolvida (honorários ou marcada como sanada) — não enviar ao eSocial'},
 };
 const EV_ORDER=['S-1200','S-1202','S-1207','REVISAR','IGNORAR'];          // eventos reais (classificação)
 const DISPLAY_ORDER=['S-1200','S-1202','S-1207','REVISAR','IGNORAR','JUSTIFICADA']; // grupos exibidos
 const EV_ALL=new Set(DISPLAY_ORDER);
 // Bucket de exibição: justificados saem das abas de evento e vão para o grupo próprio
 function displayBucket(p){
+  if(p.status==='sanada') return 'JUSTIFICADA';   // marcada como sanada manualmente = resolvida
   if(p.manual) return p.evento;   // reclassificação manual tem prioridade
   if(honorLoaded && p.honor && p.honor.found && p.honor.status==='justificada') return 'JUSTIFICADA';
   return p.evento;
@@ -1502,11 +1504,10 @@ function counts(){
 function renderCards(){
   const c=counts();
   const aindaErro = c['S-1200']+c['S-1202']+c['S-1207']+c['REVISAR'];
-  const totMeta = honorLoaded ? `${aindaErro} ainda com erro · competência ${competencia||'—'}` : `competência ${competencia||'—'}`;
-  const evMeta = honorLoaded ? 'continuam com erro' : '';
+  const totMeta = `${aindaErro} ainda com erro · ${competencia||'—'}`;
+  const evMeta = '';
   const allSel = DISPLAY_ORDER.every(x=>filterEvent.has(x));
-  const only = filterEvent.size===1 ? [...filterEvent][0] : null;
-  const sel = f => ((f==='all'? allSel : only===f) ? ' sel' : '');
+  const sel = f => ((f==='all'? allSel : (!allSel && filterEvent.has(f))) ? ' sel' : '');
   $('#cards').innerHTML = `
     <div class="card etot${sel('all')}" data-f="all" title="Clique para ver todos"><div class="lab">Servidores em divergência</div><div class="num">${c.total}</div><div class="meta">${totMeta}</div></div>
     <div class="card e1200${sel('S-1200')}" data-f="S-1200" title="Clique para filtrar"><div class="lab">S-1200 · RGPS</div><div class="num">${c['S-1200']}</div><div class="meta">${evMeta||'remuneração regime geral'}</div></div>
@@ -1514,7 +1515,7 @@ function renderCards(){
     <div class="card e1207${sel('S-1207')}" data-f="S-1207" title="Clique para filtrar"><div class="lab">S-1207 · Benefícios</div><div class="num">${c['S-1207']}</div><div class="meta">${evMeta||'aposentados / pensionistas'}</div></div>
     <div class="card ewarn${sel('REVISAR')}" data-f="REVISAR" title="Clique para filtrar"><div class="lab">Revisar</div><div class="num">${c['REVISAR']}</div><div class="meta">${c.notfound} não localizado(s) · ${c.cpfdif} CPF difere</div></div>
     <div class="card eign${sel('IGNORAR')}" data-f="IGNORAR" title="Clique para filtrar"><div class="lab">Ignorados</div><div class="num">${c['IGNORAR']}</div><div class="meta">vínculos de benefício</div></div>
-    ${honorLoaded?`<div class="card ejust${sel('JUSTIFICADA')}" data-f="JUSTIFICADA" title="Clique para filtrar"><div class="lab">Sanadas (honorários)</div><div class="num">${c['JUSTIFICADA']}</div><div class="meta">fora das abas de erro · ${c.partial} parcial(is) seguem nas abas</div></div>`:''}`;
+    <div class="card ejust${sel('JUSTIFICADA')}" data-f="JUSTIFICADA" title="Clique para filtrar"><div class="lab">Sanadas</div><div class="num">${c['JUSTIFICADA']}</div><div class="meta">${honorLoaded?`fora do envio · ${c.partial} parcial(is) nas abas`:'resolvidas · fora do envio'}</div></div>`;
 }
 function personMatches(p){
   if(!filterEvent.has(displayBucket(p))) return false;
@@ -1562,8 +1563,8 @@ function personHTML(p){
   }
   const evOpts = EV_ORDER.map(e=>`<option value="${e}" ${e===p.evento?'selected':''}>${e}</option>`).join('');
   const evSelect = `<select class="ev-edit${p.manual?' on':''}" data-key="${p.key}" title="Reclassificar evento manualmente"><option value="__auto">↺ auto (${p.autoEvento})</option>${evOpts}</select>`;
-  const stTag = p.status==='resolvida' ? '<span class="tag st-res">✓ Resolvida</span>' : (p.status==='acerto' ? '<span class="tag st-ace">✎ Acerto manual</span>' : '');
-  const stSelect = `<select class="st-edit${p.status?' on':''}" data-key="${p.key}" title="Marcar situação"><option value="">situação…</option><option value="resolvida"${p.status==='resolvida'?' selected':''}>Resolvida</option><option value="acerto"${p.status==='acerto'?' selected':''}>Acerto manual</option></select>`;
+  const stTag = p.status==='sanada' ? '<span class="tag st-san">✓ Sanada</span>' : (p.status==='acerto' ? '<span class="tag st-ace">✎ Acerto manual</span>' : (p.status==='pendente' ? '<span class="tag st-pend">⏳ Pendente</span>' : ''));
+  const stSelect = `<select class="st-edit${p.status?' on':''}" data-key="${p.key}" title="Marcar situação"><option value="">situação…</option><option value="sanada"${p.status==='sanada'?' selected':''}>Sanada</option><option value="acerto"${p.status==='acerto'?' selected':''}>Acerto manual</option><option value="pendente"${p.status==='pendente'?' selected':''}>Pendente</option></select>`;
   const tags = `<span class="badge ${ev.badge}">${p.evento}</span>
      <span class="tag reg">${p.regime}</span>
      <span class="tag">${p.situacao}</span>
@@ -1580,13 +1581,13 @@ function personHTML(p){
      ? p.diffs.map(d=>diffHTML(d,p.honor)).join('')
      : `<div style="font-size:12px;color:var(--muted)">Sem campos de valor divergentes detectados.</div>`;
   const just = (p.honor && p.honor.found && p.honor.status==='justificada') ? ' justified' : '';
-  return `<div class="person ${(p.found && !p.cpfMismatch)?'':'warn'}${just}${p.manual?' manedit':''}${p.status==='resolvida'?' resolved':''}">
+  return `<div class="person ${(p.found && !p.cpfMismatch)?'':'warn'}${just}${p.manual?' manedit':''}${p.status==='sanada'?' resolved':''}">
     <div class="pmeta">
       <div class="nome">${p.nome}</div>
       <div class="ids">${ids}</div>
       <div class="tags">${tags}</div>
       ${p.cargo?`<div class="cargo">${p.cargo}</div>`:''}
-      <input class="obs-edit" data-key="${p.key}" value="${(p.obs||'').replace(/"/g,'&quot;')}" placeholder="Observação (digite)…" title="Observação manual">
+      <textarea class="obs-edit" data-key="${p.key}" rows="1" placeholder="Observação (digite)…" title="Observação manual">${(p.obs||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')}</textarea>
       ${tnote}
       ${note}
     </div>
@@ -1602,13 +1603,14 @@ function render(){
     const list = visible.filter(p=>displayBucket(p)===ev);
     if(!list.length) return '';
     const meta=EVENTS[ev];
-    const lbl = ev==='JUSTIFICADA' ? 'Sanadas pelos honorários' : ev;
+    const lbl = ev==='JUSTIFICADA' ? 'Sanadas' : ev;
     return `<section class="group">
       <h2><span class="badge ${meta.badge}">${lbl}</span><span class="desc">${meta.desc}</span><span class="cnt">${list.length} servidor(es)</span></h2>
       ${list.map(personHTML).join('')}
     </section>`;
   }).join('');
   $('#groups').innerHTML = html || `<div class="none-shown">Nenhum servidor corresponde aos filtros atuais.</div>`;
+  $('#groups').querySelectorAll('.obs-edit').forEach(t=>{ t.style.height='auto'; t.style.height=(t.scrollHeight)+'px'; });
   $('#results').classList.remove('hidden');
   $('#placeholder').classList.add('hidden');
   $('#btnExport').disabled = processed.length===0;
@@ -1648,8 +1650,8 @@ function exportXLSX(){
     if(p.unpaired) obs=(obs?obs+'; ':'')+'Par ERGON/eSocial incompleto';
     if(p.tempNote) obs=(obs?obs+'; ':'')+p.tempNote;
     if(p.manual) obs=(obs?obs+'; ':'')+'Reclassificado manualmente (auto: '+p.autoEvento+')';
-    const grupo = displayBucket(p)==='JUSTIFICADA' ? 'Sanada (honorários)' : displayBucket(p);
-    const stLbl = p.status==='resolvida'?'Resolvida':(p.status==='acerto'?'Acerto manual':'');
+    const grupo = displayBucket(p)==='JUSTIFICADA' ? 'Sanada' : displayBucket(p);
+    const stLbl = p.status==='sanada'?'Sanada':(p.status==='acerto'?'Acerto manual':(p.status==='pendente'?'Pendente':''));
     const row=[p.evento,grupo,p.cpf,p.nome,p.mat,p.regime,p.situacao,p.plano,p.cargo,p.lotacao,comp,p.diffs.length,p.diffs.map(d=>d.field).join(', '),p.matchBy||'—',obs,stLbl,p.obs||''];
     if(honorLoaded){
       const h=p.honor;
@@ -1676,7 +1678,8 @@ function exportXLSX(){
     ['S-1202','Remuneração — RPPS (ativo)',c['S-1202']],
     ['S-1207','Benefícios — RPPS (aposentado vivo na competência)',c['S-1207']],
     ['REVISAR','Sem classificação automática',c['REVISAR']],
-    ['IGNORAR','Vínculo de benefício (envio indefinido)',c['IGNORAR']],[],
+    ['IGNORAR','Vínculo de benefício (envio indefinido)',c['IGNORAR']],
+    ['SANADAS','Divergências resolvidas (honorários ou marcadas como sanada)',c['JUSTIFICADA']],[],
     ['Não localizados na base',c.notfound],
     ['CPF difere entre divergência e base',c.cpfdif],
     ...(honorLoaded?[['Justificadas por honorários',c.justified],['Parcialmente justificadas',c.partial]]:[]),
@@ -1752,10 +1755,15 @@ $('#chips').addEventListener('click',e=>{
 });
 // KPIs clicáveis: clicar num card filtra a lista para aquele evento (clicar de novo mostra todos)
 function setFilterCard(f){
-  if(f==='all' || (filterEvent.size===1 && filterEvent.has(f))) filterEvent = new Set(DISPLAY_ORDER);
-  else filterEvent = new Set([f]);
   const allOn = DISPLAY_ORDER.every(x=>filterEvent.has(x));
-  document.querySelectorAll('#chips .chip').forEach(c=>{ c.setAttribute('aria-pressed', c.dataset.f==='all'? allOn : filterEvent.has(c.dataset.f)); });
+  if(f==='all'){ filterEvent = new Set(DISPLAY_ORDER); }
+  else if(allOn){ filterEvent = new Set([f]); }              // de "todos" para um específico
+  else {                                                     // já num subconjunto: alterna este tipo (multi-seleção)
+    if(filterEvent.has(f)) filterEvent.delete(f); else filterEvent.add(f);
+    if(filterEvent.size===0) filterEvent = new Set(DISPLAY_ORDER);
+  }
+  const nowAll = DISPLAY_ORDER.every(x=>filterEvent.has(x));
+  document.querySelectorAll('#chips .chip').forEach(c=>{ c.setAttribute('aria-pressed', c.dataset.f==='all'? nowAll : filterEvent.has(c.dataset.f)); });
   render();
 }
 $('#cards').addEventListener('click',e=>{ const card=e.target.closest('.card'); if(card&&card.dataset.f) setFilterCard(card.dataset.f); });
@@ -1767,7 +1775,7 @@ $('#groups').addEventListener('change',e=>{
   const st=e.target.closest('.st-edit'); if(st){ setManualStatus(st.dataset.key, st.value); }
 });
 $('#groups').addEventListener('input',e=>{
-  const o=e.target.closest('.obs-edit'); if(o) setManualObs(o.dataset.key, o.value);
+  const o=e.target.closest('.obs-edit'); if(o){ setManualObs(o.dataset.key, o.value); o.style.height='auto'; o.style.height=(o.scrollHeight)+'px'; }
 });
 
 function clearDivergences(){
@@ -1821,7 +1829,6 @@ $('#btnHonorClear').addEventListener('click',()=>{
   $('#honorStatus').innerHTML='Justifica divergências: <b>774</b> abate <code>VLRRENDTRIB</code> e <b>8999</b> <code>VLRCRMEN</code>.';
   $('#honorbar').classList.remove('loaded');
   $('#btnHonorClear').classList.add('hidden');
-  $('#chipJust').classList.add('hidden');
   filterEvent.add('JUSTIFICADA');
   render();
   saveSession();
@@ -1856,7 +1863,7 @@ function restoreSession(){
   let s; try{ s=JSON.parse(localStorage.getItem(SESSION_KEY)); }catch(e){ return; }
   if(!s || !s.divRows || !s.divRows.length) return;
   manualOverrides = new Map(s.overrides||[]);
-  manualStatus = new Map(s.status||[]);
+  manualStatus = new Map((s.status||[]).map(([k,v])=>[k, v==='resolvida'?'sanada':v]));
   manualObs = new Map(s.obs||[]);
   if(s.honor && s.honor.loaded && (s.honor.map||[]).length){
     honorMap = new Map((s.honor.map||[]).map(([k,v])=>[k,{h774:v.h774||0,h8999:v.h8999||0,h4015:v.h4015||0,raw:{}}]));
