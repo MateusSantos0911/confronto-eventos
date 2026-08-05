@@ -1103,6 +1103,7 @@
       <input type="search" id="envSearch" placeholder="Buscar por CPF, nome ou matr&iacute;cula&hellip;">
       <div class="chips" id="envTabs">
         <button class="chip cwarn" data-tab="afazer" aria-pressed="true">A enviar</button>
+        <button class="chip c1207" data-tab="semjson" aria-pressed="false">Sem JSON</button>
         <button class="chip cjust" data-tab="enviados" aria-pressed="false">Enviados</button>
         <button class="chip call" data-tab="pend" aria-pressed="false">Pendentes</button>
         <button class="chip cign" data-tab="fora" aria-pressed="false">Gerados fora da lista</button>
@@ -2184,9 +2185,9 @@ function envCompute(){
     if(!fol.has(x.cpf)) fol.set(x.cpf,{cpf:x.cpf,nome:x.nome,categoria:x.categoria,situacao:x.situacao,comp:x.comp,mats:[]});
     var o=fol.get(x.cpf), mt=(x.numfunc||'')+'/'+(x.numvinc||''); if(mt!=='/'&&o.mats.indexOf(mt)<0) o.mats.push(mt);
   });
-  var enviados=[], naoEnviado=[], pend=[], geradosN=0, restanteN=0;
+  var enviados=[], naoEnviado=[], pend=[], naoGerado=[], geradosN=0, restanteN=0;
   fol.forEach(function(o){
-    o.gerado=ger.has(o.cpf); if(o.gerado) geradosN++;
+    o.gerado=ger.has(o.cpf); if(o.gerado) geradosN++; else naoGerado.push(o);
     o.tipos=o.gerado?Array.from(envGerado.get(o.cpf)).join(', '):'';
     o.enviado=envSent.has(o.cpf);
     o.pend=!o.enviado&&envPend.has(o.cpf); o.motivo=envPend.get(o.cpf)||'';
@@ -2195,7 +2196,7 @@ function envCompute(){
   });
   var fora=[]; ger.forEach(function(c){ if(!fol.has(c)){ var rec=byCpf.get(c); fora.push({cpf:c,nome:(rec&&rec[0]&&rec[0].NOME)||'',tipos:Array.from(envGerado.get(c)).join(', ')}); } });
   fora.sort(function(a,b){ return (b.nome?1:0)-(a.nome?1:0) || a.cpf.localeCompare(b.cpf); });
-  return {esperados:fol.size, vinculos:envFolha.length, gerados:geradosN, enviados:enviados, naoEnviado:naoEnviado, pend:pend, restante:restanteN, fora:fora, folMap:fol};
+  return {esperados:fol.size, vinculos:envFolha.length, gerados:geradosN, enviados:enviados, naoEnviado:naoEnviado, naoGerado:naoGerado, pend:pend, restante:restanteN, fora:fora, folMap:fol};
 }
 function envMarkSent(cpf){ cpf=padCpf(cpf); if(!cpf)return; envSent.set(cpf,1); if(envPend.has(cpf)){ envPend.delete(cpf); envPendSave(); } envSentSave(); envRender(); }
 function envUnmarkSent(cpf){ cpf=padCpf(cpf); envSent.delete(cpf); envSentSave(); envRender(); }
@@ -2237,7 +2238,7 @@ function envRender(){
     '<div class="card etot"><div class="lab">Esperados</div><div class="num">'+c.esperados.toLocaleString('pt-BR')+'</div><div class="meta">'+c.vinculos.toLocaleString('pt-BR')+' vínculos</div></div>'+
     '<div class="card e1200"><div class="lab">Gerados</div><div class="num">'+c.gerados.toLocaleString('pt-BR')+'</div><div class="meta">têm JSON</div></div>'+
     '<div class="card e1207" data-tab="enviados"><div class="lab">Enviados</div><div class="num">'+c.enviados.length.toLocaleString('pt-BR')+'</div><div class="meta">'+cob+'% dos esperados</div></div>'+
-    '<div class="card ewarn" data-tab="afazer"><div class="lab">A enviar</div><div class="num">'+c.restante.toLocaleString('pt-BR')+'</div><div class="meta">sem decisão ainda</div></div>'+
+    '<div class="card ewarn" data-tab="semjson"><div class="lab">Sem JSON</div><div class="num">'+c.naoGerado.length.toLocaleString('pt-BR')+'</div><div class="meta">na folha, sem evento gerado</div></div>'+
     '<div class="card e1202" data-tab="pend"><div class="lab">Pendentes</div><div class="num">'+c.pend.length.toLocaleString('pt-BR')+'</div><div class="meta">com motivo</div></div>'+
     '<div class="card eign" data-tab="fora"><div class="lab">Fora da lista</div><div class="num">'+c.fora.length.toLocaleString('pt-BR')+'</div><div class="meta">gerado, não esperado</div></div>';
   envRenderList(c);
@@ -2246,14 +2247,14 @@ function envRenderList(c){
   var t=envSearch.toLowerCase(), dt=onlyDigits(t), el=$('#envList');
   function match(x){ return !t||(x.nome&&x.nome.toLowerCase().indexOf(t)>=0)||(dt&&x.cpf.indexOf(dt)>=0)||((x.mats||[]).join(' ').indexOf(t)>=0); }
   var isFora=(envTab==='fora'), src;
-  if(envTab==='enviados') src=c.enviados; else if(envTab==='pend') src=c.pend; else if(isFora) src=c.fora; else src=c.naoEnviado;
+  if(envTab==='enviados') src=c.enviados; else if(envTab==='pend') src=c.pend; else if(envTab==='semjson') src=c.naoGerado; else if(isFora) src=c.fora; else src=c.naoEnviado;
   var rows = isFora ? c.fora.filter(function(x){return !t||(dt&&x.cpf.indexOf(dt)>=0)||(x.nome&&x.nome.toLowerCase().indexOf(t)>=0);}) : src.filter(match);
   var total=rows.length, pages=Math.max(1,Math.ceil(total/envPageSize));
   if(envPage>pages) envPage=pages; if(envPage<1) envPage=1;
   var start=(envPage-1)*envPageSize, end=Math.min(total,start+envPageSize), pageRows=rows.slice(start,end);
   var bulk = (envTab==='afazer') ? '<div class="env-bulk"><button class="env-bulkbtn" id="envMarkAll">✓ Marcar gerados como enviados</button><span class="env-bulk-note">marca como enviados todos os <b>gerados</b> desta lista (respeita a busca)</span></div>' : '';
   if(!total){
-    var empty = envTab==='enviados'?'Nada marcado como enviado ainda.' : envTab==='pend'?'Nenhuma pendência marcada.' : isFora?'Nenhum gerado fora da lista de esperados.' : 'Nada a enviar — tudo foi enviado ou marcado como pendente 🎉';
+    var empty = envTab==='enviados'?'Nada marcado como enviado ainda.' : envTab==='pend'?'Nenhuma pendência marcada.' : envTab==='semjson'?'Todos os esperados têm evento gerado 🎉' : isFora?'Nenhum gerado fora da lista de esperados.' : 'Nada a enviar — tudo foi enviado ou marcado como pendente 🎉';
     el.innerHTML = bulk + '<div class="dsh-none">'+empty+'</div>'; return;
   }
   var body = isFora
